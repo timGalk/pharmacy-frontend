@@ -1,528 +1,580 @@
 import React, { useState } from 'react';
-
-// Since we can't import MUI directly, we'll create a comprehensive MUI-style component
-// that would work with Material-UI when properly imported
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  Button,
+  InputBase,
+  Paper,
+  Grid,
+  Card,
+  CardMedia,
+  CardContent,
+  Container,
+  IconButton,
+  Link,
+  Box,
+  useTheme,
+  useMediaQuery,
+  alpha,
+  Stack,
+  Divider,
+  TextField,
+} from '@mui/material';
+import {
+  Search as SearchIcon,
+  Menu as MenuIcon,
+  AccountCircle,
+  LocalPharmacy as LocalPharmacyIcon,
+  Chat as ChatIcon,
+  CloudUpload as CloudUploadIcon,
+  LocalShipping as LocalShippingIcon,
+  Favorite as FavoriteIcon,
+  Star as StarIcon,
+  ArrowForward as ArrowForwardIcon,
+  Send as SendIcon,
+  LocalHospital as LocalHospitalIcon,
+  FitnessCenter as FitnessCenterIcon,
+  Restaurant as RestaurantIcon,
+} from '@mui/icons-material';
 
 const HealthHubPharmacy = () => {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [email, setEmail] = useState('');
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const categories = [
     { name: 'Pain Relief', image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&h=300&fit=crop' },
     { name: 'Antibiotics', image: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=300&h=300&fit=crop' },
     { name: 'Vitamins', image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=300&h=300&fit=crop' },
     { name: 'Skin Care', image: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=300&h=300&fit=crop' },
-    { name: 'Digestive Health', image: 'https://images.unsplash.com/photo-1559757175-0eb30cd0eba8?w=300&h=300&fit=crop' },
-    { name: 'Respiratory Care', image: 'https://images.unsplash.com/photo-1559757146-338c0af19d27?w=300&h=300&fit=crop' },
+    { name: 'Digestive Health', image: 'https://images.unsplash.com/photo-1576671081837-49000212a370?q=80&w=1998&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' },
+    { name: 'Respiratory Care', image: 'https://images.unsplash.com/photo-1737984954770-7ddbe3fe3698?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' },
   ];
 
-  const featuredSections = [
-    { 
-      title: 'Top Medicines', 
-      image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?q=80&w=2030&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-      description: 'Most popular and trusted medicines'
+  const featuredProducts = [
+    {
+      name: 'Vitamin D3 1000IU',
+      price: '$19.99',
+      rating: 4.8,
+      image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&h=300&fit=crop',
+      category: 'Vitamins',
     },
-    { 
-      title: 'Featured Products', 
-      image: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=250&fit=crop',
-      description: 'Curated selection of quality products'
+    {
+      name: 'Omega-3 Fish Oil',
+      price: '$24.99',
+      rating: 4.7,
+      image: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=300&h=300&fit=crop',
+      category: 'Supplements',
     },
-    { 
-      title: 'Special Offers', 
-      image: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400&h=250&fit=crop',
-      description: 'Limited time deals and discounts'
+    {
+      name: 'Probiotic Complex',
+      price: '$29.99',
+      rating: 4.9,
+      image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=300&h=300&fit=crop',
+      category: 'Digestive Health',
     },
   ];
 
-  // MUI-style component structure
+  const healthTips = [
+    {
+      title: 'Stay Hydrated',
+      description: 'Drink at least 8 glasses of water daily for optimal health.',
+      icon: <LocalHospitalIcon />,
+    },
+    {
+      title: 'Exercise Regularly',
+      description: '30 minutes of moderate exercise daily can improve your health.',
+      icon: <FitnessCenterIcon />,
+    },
+    {
+      title: 'Eat Balanced Diet',
+      description: 'Include fruits, vegetables, and whole grains in your diet.',
+      icon: <RestaurantIcon />,
+    },
+  ];
+
   return (
-    <div style={{ 
+    <Box sx={{ 
       minHeight: '100vh', 
-      backgroundColor: '#fafafa',
-      fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif'
+      background: 'linear-gradient(135deg, #e3f2fd 0%, #90caf9 100%)',
+      fontFamily: 'Roboto, Arial, sans-serif',
     }}>
-      {/* AppBar equivalent */}
-      <header style={{
-        backgroundColor: '#fff',
-        boxShadow: '0px 2px 4px -1px rgba(0,0,0,0.2), 0px 4px 5px 0px rgba(0,0,0,0.14), 0px 1px 10px 0px rgba(0,0,0,0.12)',
-        position: 'sticky',
-        top: 0,
-        zIndex: 1100
-      }}>
-        <div style={{
-          maxWidth: '1200px',
-          margin: '0 auto',
-          padding: '0 24px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          minHeight: '64px'
-        }}>
-          {/* Logo and Title */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              backgroundColor: '#1976d2',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white'
-            }}>
-              🏥
-            </div>
-            <h1 style={{
-              fontSize: '1.25rem',
-              fontWeight: 500,
-              margin: 0,
-              color: 'rgba(0, 0, 0, 0.87)'
-            }}>
-              HealthHub Pharmacy
-            </h1>
-          </div>
-
-          {/* Navigation */}
-          <nav style={{ 
-            display: window.innerWidth >= 768 ? 'flex' : 'none',
-            gap: '32px'
-          }}>
-            <button style={{
-              background: 'none',
-              border: 'none',
-              color: 'rgba(0, 0, 0, 0.87)',
-              fontSize: '14px',
-              fontWeight: 500,
-              cursor: 'pointer',
-              padding: '6px 16px',
-              borderRadius: '4px',
-              transition: 'background-color 0.2s'
-            }}
-            onMouseOver={(e) => (e.target as HTMLElement).style.backgroundColor = 'rgba(0, 0, 0, 0.04)'}
-            onMouseOut={(e) => (e.target as HTMLElement).style.backgroundColor = 'transparent'}
-            >
-              Home
-            </button>
-            <button style={{
-              background: 'none',
-              border: 'none',
-              color: 'rgba(0, 0, 0, 0.87)',
-              fontSize: '14px',
-              fontWeight: 500,
-              cursor: 'pointer',
-              padding: '6px 16px',
-              borderRadius: '4px',
-              transition: 'background-color 0.2s'
-            }}
-            onMouseOver={(e) => (e.target as HTMLElement).style.backgroundColor = 'rgba(0, 0, 0, 0.04)'}
-            onMouseOut={(e) => (e.target as HTMLElement).style.backgroundColor = 'transparent'}
-            >
-              Medicines
-            </button>
-            <button style={{
-              background: 'none',
-              border: 'none',
-              color: 'rgba(0, 0, 0, 0.87)',
-              fontSize: '14px',
-              fontWeight: 500,
-              cursor: 'pointer',
-              padding: '6px 16px',
-              borderRadius: '4px',
-              transition: 'background-color 0.2s'
-            }}
-            onMouseOver={(e) => (e.target as HTMLElement).style.backgroundColor = 'rgba(0, 0, 0, 0.04)'}
-            onMouseOut={(e) => (e.target as HTMLElement).style.backgroundColor = 'transparent'}
-            >
-              Contact
-            </button>
-          </nav>
-
-          {/* Search and Login */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{
-              display: window.innerWidth >= 600 ? 'flex' : 'none',
-              position: 'relative'
-            }}>
-              <input
-                type="text"
-                placeholder="Search"
-                style={{
-                  padding: '8px 12px 8px 40px',
-                  border: '1px solid rgba(0, 0, 0, 0.23)',
-                  borderRadius: '4px',
-                  fontSize: '16px',
-                  outline: 'none',
-                  backgroundColor: '#f5f5f5'
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#1976d2';
-                  e.target.style.backgroundColor = '#fff';
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = 'rgba(0, 0, 0, 0.23)';
-                  e.target.style.backgroundColor = '#f5f5f5';
-                }}
-              />
-              <span style={{
-                position: 'absolute',
-                left: '12px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                color: 'rgba(0, 0, 0, 0.54)'
-              }}>
-                🔍
-              </span>
-            </div>
-            
-            <button style={{
-              backgroundColor: '#1976d2',
-              color: 'white',
-              border: 'none',
-              padding: '6px 16px',
-              borderRadius: '4px',
-              fontSize: '14px',
-              fontWeight: 500,
-              cursor: 'pointer',
-              boxShadow: '0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12)',
-              transition: 'all 0.2s',
-              textTransform: 'uppercase'
-            }}
-            onMouseOver={(e) => {
-              (e.target as HTMLElement).style.backgroundColor = '#1565c0';
-              (e.target as HTMLElement).style.boxShadow = '0px 2px 4px -1px rgba(0,0,0,0.2), 0px 4px 5px 0px rgba(0,0,0,0.14), 0px 1px 10px 0px rgba(0,0,0,0.12)';
-            }}
-            onMouseOut={(e) => {
-              const target = e.target as HTMLElement;
-              target.style.backgroundColor = 'transparent';
-              target.style.boxShadow = 'none';
-            }}
-            >
-              Login/Register
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Container equivalent */}
-      <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 24px' }}>
-        {/* Paper - Main Search */}
-        <div style={{
-          backgroundColor: '#fff',
-          borderRadius: '4px',
-          boxShadow: '0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12)',
-          padding: '24px',
-          marginBottom: '32px'
-        }}>
-          <div style={{ position: 'relative' }}>
-            <input
-              type="text"
-              placeholder="Search for medicines"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '16px 16px 16px 48px',
-                border: '1px solid rgba(0, 0, 0, 0.23)',
-                borderRadius: '4px',
-                fontSize: '16px',
-                outline: 'none',
-                backgroundColor: '#f5f5f5'
+      <AppBar 
+        position="sticky" 
+        color="default" 
+        elevation={0} 
+        sx={{ 
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+          backdropFilter: 'blur(8px)',
+          bgcolor: alpha('#fff', 0.8),
+        }}
+      >
+        <Toolbar>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <LocalPharmacyIcon color="primary" sx={{ fontSize: 32 }} />
+            <Typography 
+              variant="h6" 
+              color="primary" 
+              sx={{ 
+                fontWeight: 700,
+                letterSpacing: '-0.5px',
               }}
-              onFocus={(e) => {
-                e.target.style.borderColor = '#1976d2';
-                e.target.style.backgroundColor = '#fff';
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = 'rgba(0, 0, 0, 0.23)';
-                e.target.style.backgroundColor = '#f5f5f5';
+            >
+              HealthHub
+            </Typography>
+          </Box>
+          <Box sx={{ flexGrow: 1 }} />
+          {!isMobile && (
+            <InputBase
+              placeholder="Search medicines..."
+              startAdornment={<SearchIcon sx={{ color: 'text.secondary', mr: 1 }} />}
+              sx={{
+                bgcolor: alpha('#f1f5f9', 0.8),
+                borderRadius: 2,
+                px: 2,
+                py: 0.5,
+                width: 300,
+                transition: 'all 0.2s',
+                '&:hover': {
+                  bgcolor: '#f1f5f9',
+                },
+                '&:focus-within': {
+                  bgcolor: '#fff',
+                  boxShadow: '0 0 0 2px rgba(25, 118, 210, 0.2)',
+                },
               }}
             />
-            <span style={{
-              position: 'absolute',
-              left: '16px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              color: '#1976d2',
-              fontSize: '20px'
-            }}>
-              🔍
-            </span>
-          </div>
-        </div>
+          )}
+          <Button
+            variant="contained"
+            startIcon={<AccountCircle />}
+            sx={{ 
+              ml: 2,
+              borderRadius: 2,
+              textTransform: 'none',
+              px: 3,
+              fontWeight: 600,
+              background: 'linear-gradient(90deg, #1976d2 0%, #64b5f6 100%)',
+              boxShadow: '0 4px 20px 0 rgba(25, 118, 210, 0.15)',
+              transition: 'all 0.3s',
+              '&:hover': {
+                background: 'linear-gradient(90deg, #1565c0 0%, #42a5f5 100%)',
+                boxShadow: '0 6px 24px 0 rgba(25, 118, 210, 0.2)',
+              },
+            }}
+          >
+            Login
+          </Button>
+        </Toolbar>
+      </AppBar>
 
-        {/* Grid - Featured Sections */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-          gap: '24px',
-          marginBottom: '48px'
-        }}>
-          {featuredSections.map((section, index) => (
-            <div
-              key={index}
-              style={{
-                backgroundColor: '#fff',
-                borderRadius: '4px',
-                boxShadow: '0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12)',
-                overflow: 'hidden',
-                cursor: 'pointer',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                transform: 'translateY(0px)'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.boxShadow = '0px 5px 5px -3px rgba(0,0,0,0.2), 0px 8px 10px 1px rgba(0,0,0,0.14), 0px 3px 14px 2px rgba(0,0,0,0.12)';
-                e.currentTarget.style.transform = 'translateY(-4px)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.boxShadow = '0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12)';
-                e.currentTarget.style.transform = 'translateY(0px)';
-              }}
-            >
-              <img
-                src={section.image}
-                alt={section.title}
-                style={{
-                  width: '100%',
-                  height: '200px',
-                  objectFit: 'cover'
-                }}
-              />
-              <div style={{ padding: '16px' }}>
-                <h3 style={{
-                  fontSize: '1.25rem',
-                  fontWeight: 500,
-                  margin: '0 0 8px 0',
-                  color: 'rgba(0, 0, 0, 0.87)'
-                }}>
-                  {section.title}
-                </h3>
-                <p style={{
-                  fontSize: '14px',
-                  color: 'rgba(0, 0, 0, 0.6)',
-                  margin: 0,
-                  lineHeight: '1.43'
-                }}>
-                  {section.description}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
+      <Container maxWidth="lg" sx={{ py: 6 }}>
+        <Paper 
+          elevation={8}
+          sx={{ 
+            p: 4, 
+            mb: 6, 
+            bgcolor: '#fff',
+            borderRadius: 5,
+            boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
+            backdropFilter: 'blur(4px)',
+          }}
+        >
+          <InputBase
+            fullWidth
+            placeholder="Search for medicines..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            startAdornment={<SearchIcon sx={{ color: 'text.secondary', mr: 1 }} />}
+            sx={{
+              bgcolor: '#f8fafc',
+              borderRadius: 2,
+              px: 2,
+              py: 1.5,
+              transition: 'all 0.2s',
+              '&:hover': {
+                bgcolor: '#f1f5f9',
+              },
+              '&:focus-within': {
+                bgcolor: '#fff',
+                boxShadow: '0 0 0 2px rgba(25, 118, 210, 0.2)',
+              },
+            }}
+          />
+        </Paper>
 
-        {/* Typography - Section Title */}
-        <h2 style={{
-          fontSize: '2.125rem',
-          fontWeight: 400,
-          margin: '0 0 32px 0',
-          color: 'rgba(0, 0, 0, 0.87)',
-          letterSpacing: '0.00735em'
-        }}>
-          Medicine Categories
-        </h2>
+        <Typography 
+          variant="h4" 
+          sx={{ 
+            mb: 4, 
+            fontWeight: 700,
+            color: '#1976d2',
+            letterSpacing: '-0.5px',
+          }}
+        >
+          Categories
+        </Typography>
 
-        {/* Grid - Categories */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-          gap: '16px',
-          marginBottom: '48px'
-        }}>
+        <Grid container spacing={3} sx={{ mb: 8 }}>
           {categories.map((category, index) => (
-            <div
-              key={index}
-              style={{
-                backgroundColor: '#fff',
-                borderRadius: '4px',
-                boxShadow: '0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12)',
-                overflow: 'hidden',
-                cursor: 'pointer',
-                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.boxShadow = '0px 3px 3px -2px rgba(0,0,0,0.2), 0px 3px 4px 0px rgba(0,0,0,0.14), 0px 1px 8px 0px rgba(0,0,0,0.12)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.boxShadow = '0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12)';
-              }}
-            >
-              <img
-                src={category.image}
-                alt={category.name}
-                style={{
-                  width: '100%',
-                  height: '120px',
-                  objectFit: 'cover'
-                }}
-              />
-              <div style={{ padding: '12px', textAlign: 'center' }}>
-                <h3 style={{
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  margin: 0,
-                  color: 'rgba(0, 0, 0, 0.87)'
-                }}>
-                  {category.name}
-                </h3>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Services */}
-        <h2 style={{
-          fontSize: '2.125rem',
-          fontWeight: 400,
-          margin: '0 0 32px 0',
-          color: 'rgba(0, 0, 0, 0.87)',
-          letterSpacing: '0.00735em'
-        }}>
-          Our Services
-        </h2>
-
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginBottom: '48px' }}>
-          {[
-            { icon: '💬', label: 'Online Consultations', color: '#e3f2fd' },
-            { icon: '📤', label: 'Prescription Upload', color: '#e8f5e8' },
-            { icon: '🚛', label: 'Delivery Options', color: '#f3e5f5' }
-          ].map((service, index) => (
-            <div
-              key={index}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '8px 16px',
-                backgroundColor: service.color,
-                borderRadius: '16px',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                border: '1px solid transparent'
-              }}
-              onMouseOver={(e) => {
-                (e.target as HTMLElement).style.backgroundColor = '#1976d2';
-                (e.target as HTMLElement).style.color = 'white';
-                (e.target as HTMLElement).style.boxShadow = '0px 2px 4px -1px rgba(0,0,0,0.2), 0px 4px 5px 0px rgba(0,0,0,0.14), 0px 1px 10px 0px rgba(0,0,0,0.12)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.backgroundColor = service.color;
-                e.currentTarget.style.color = 'rgba(0, 0, 0, 0.87)';
-                e.currentTarget.style.boxShadow = 'none';
-              }}
-            >
-              <span style={{ fontSize: '16px' }}>{service.icon}</span>
-              <span style={{ fontSize: '14px', fontWeight: 500 }}>{service.label}</span>
-            </div>
-          ))}
-        </div>
-      </main>
-
-      {/* Footer */}
-      <footer style={{
-        backgroundColor: '#fff',
-        borderTop: '1px solid rgba(0, 0, 0, 0.12)',
-        marginTop: '64px'
-      }}>
-        <div style={{
-          maxWidth: '1200px',
-          margin: '0 auto',
-          padding: '48px 24px',
-          textAlign: 'center'
-        }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            flexWrap: 'wrap',
-            gap: '32px',
-            marginBottom: '32px'
-          }}>
-            <a href="#" style={{
-              color: 'rgba(0, 0, 0, 0.6)',
-              textDecoration: 'none',
-              fontSize: '14px',
-              transition: 'color 0.2s'
-            }}
-            onMouseOver={(e) => (e.target as HTMLElement).style.color = '#1976d2'}
-            onMouseOut={(e) => (e.target as HTMLElement).style.color = 'rgba(0, 0, 0, 0.6)'}
-            >
-              About Us
-            </a>
-            <a href="#" style={{
-              color: 'rgba(0, 0, 0, 0.6)',
-              textDecoration: 'none',
-              fontSize: '14px',
-              transition: 'color 0.2s'
-            }}
-            onMouseOver={(e) => (e.target as HTMLElement).style.color = '#1976d2'}
-            onMouseOut={(e) => (e.target as HTMLElement).style.color = 'rgba(0, 0, 0, 0.6)'}
-            >
-              Help Center
-            </a>
-            <a href="#" style={{
-              color: 'rgba(0, 0, 0, 0.6)',
-              textDecoration: 'none',
-              fontSize: '14px',
-              transition: 'color 0.2s'
-            }}
-            onMouseOver={(e) => (e.target as HTMLElement).style.color = '#1976d2'}
-            onMouseOut={(e) => (e.target as HTMLElement).style.color = 'rgba(0, 0, 0, 0.6)'}
-            >
-              Terms of Service
-            </a>
-          </div>
-
-          <div style={{
-            width: '100%',
-            height: '1px',
-            backgroundColor: 'rgba(0, 0, 0, 0.12)',
-            margin: '32px 0'
-          }}></div>
-
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            gap: '16px',
-            marginBottom: '32px'
-          }}>
-            {['🐦', '📘', '📷'].map((icon, index) => (
-              <button
-                key={index}
-                style={{
-                  width: '48px',
-                  height: '48px',
-                  backgroundColor: '#e3f2fd',
-                  border: 'none',
-                  borderRadius: '50%',
+            <Grid item xs={6} sm={4} md={2} key={index}>
+              <Card 
+                elevation={8}
+                sx={{ 
+                  bgcolor: '#fff',
+                  borderRadius: 5,
+                  transition: 'all 0.3s ease',
                   cursor: 'pointer',
-                  fontSize: '20px',
-                  transition: 'all 0.2s',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-                onMouseOver={(e) => {
-                  (e.target as HTMLElement).style.backgroundColor = '#1976d2';
-                  (e.target as HTMLElement).style.transform = 'scale(1.1)';
-                }}
-                onMouseOut={(e) => {
-                  (e.target as HTMLElement).style.backgroundColor = '#e3f2fd';
-                  (e.target as HTMLElement).style.transform = 'scale(1)';
+                  '&:hover': {
+                    transform: 'translateY(-8px)',
+                    boxShadow: '0 12px 32px 0 rgba(31, 38, 135, 0.15)',
+                  },
                 }}
               >
-                {icon}
-              </button>
-            ))}
-          </div>
+                <CardMedia
+                  component="img"
+                  height="160"
+                  image={category.image}
+                  alt={category.name}
+                  sx={{ 
+                    objectFit: 'cover',
+                    borderTopLeftRadius: 20,
+                    borderTopRightRadius: 20,
+                  }}
+                />
+                <CardContent sx={{ p: 2, textAlign: 'center' }}>
+                  <Typography 
+                    variant="subtitle1" 
+                    sx={{ 
+                      fontWeight: 600,
+                      color: 'text.primary',
+                    }}
+                  >
+                    {category.name}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
 
-          <p style={{
-            color: 'rgba(0, 0, 0, 0.6)',
-            fontSize: '14px',
-            margin: 0
-          }}>
-            © 2024 HealthHub Pharmacy. All rights reserved.
-          </p>
-        </div>
-      </footer>
-    </div>
+        <Typography 
+          variant="h4" 
+          sx={{ 
+            mb: 4, 
+            fontWeight: 700,
+            color: '#1976d2',
+            letterSpacing: '-0.5px',
+          }}
+        >
+          Featured Products
+        </Typography>
+
+        <Grid container spacing={3} sx={{ mb: 8 }}>
+          {featuredProducts.map((product, index) => (
+            <Grid item xs={12} sm={6} md={4} key={index}>
+              <Card 
+                elevation={8}
+                sx={{ 
+                  bgcolor: '#fff',
+                  borderRadius: 5,
+                  transition: 'all 0.3s ease',
+                  cursor: 'pointer',
+                  '&:hover': {
+                    transform: 'translateY(-8px)',
+                    boxShadow: '0 12px 32px 0 rgba(31, 38, 135, 0.15)',
+                  },
+                }}
+              >
+                <CardMedia
+                  component="img"
+                  height="200"
+                  image={product.image}
+                  alt={product.name}
+                  sx={{ 
+                    objectFit: 'cover',
+                    borderTopLeftRadius: 20,
+                    borderTopRightRadius: 20,
+                  }}
+                />
+                <CardContent sx={{ p: 3 }}>
+                  <Typography 
+                    variant="subtitle1" 
+                    sx={{ 
+                      fontWeight: 600,
+                      color: 'text.primary',
+                      mb: 1,
+                    }}
+                  >
+                    {product.name}
+                  </Typography>
+                  <Typography 
+                    variant="body2" 
+                    color="text.secondary"
+                    sx={{ mb: 1 }}
+                  >
+                    {product.category}
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <StarIcon sx={{ color: '#ffc107', fontSize: 20 }} />
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      {product.rating}
+                    </Typography>
+                  </Box>
+                  <Typography 
+                    variant="h6" 
+                    color="primary"
+                    sx={{ fontWeight: 700 }}
+                  >
+                    {product.price}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+
+        <Typography 
+          variant="h4" 
+          sx={{ 
+            mb: 4, 
+            fontWeight: 700,
+            color: '#1976d2',
+            letterSpacing: '-0.5px',
+          }}
+        >
+          Services
+        </Typography>
+
+        <Stack 
+          direction={{ xs: 'column', sm: 'row' }} 
+          spacing={3} 
+          sx={{ mb: 8 }}
+        >
+          {[
+            { icon: <ChatIcon />, label: 'Online Consultations' },
+            { icon: <CloudUploadIcon />, label: 'Prescription Upload' },
+            { icon: <LocalShippingIcon />, label: 'Delivery Options' },
+          ].map((service, index) => (
+            <Button
+              key={index}
+              variant="outlined"
+              startIcon={service.icon}
+              sx={{ 
+                borderRadius: 3,
+                textTransform: 'none',
+                px: 4,
+                py: 2,
+                borderWidth: 2,
+                fontWeight: 600,
+                fontSize: 16,
+                transition: 'all 0.3s',
+                '&:hover': {
+                  borderWidth: 2,
+                  transform: 'translateY(-4px)',
+                  boxShadow: '0 8px 24px rgba(25, 118, 210, 0.15)',
+                  background: 'linear-gradient(90deg, #1976d2 0%, #64b5f6 100%)',
+                  color: '#fff',
+                },
+              }}
+            >
+              {service.label}
+            </Button>
+          ))}
+        </Stack>
+
+        <Typography 
+          variant="h4" 
+          sx={{ 
+            mb: 4, 
+            fontWeight: 700,
+            color: '#1976d2',
+            letterSpacing: '-0.5px',
+          }}
+        >
+          Health Tips
+        </Typography>
+
+        <Grid container spacing={3} sx={{ mb: 8 }}>
+          {healthTips.map((tip, index) => (
+            <Grid item xs={12} sm={4} key={index}>
+              <Paper
+                elevation={8}
+                sx={{
+                  p: 3,
+                  borderRadius: 5,
+                  height: '100%',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0 12px 32px 0 rgba(31, 38, 135, 0.15)',
+                  },
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                  <Box
+                    sx={{
+                      bgcolor: 'primary.main',
+                      borderRadius: 2,
+                      p: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {tip.icon}
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                    {tip.title}
+                  </Typography>
+                </Box>
+                <Typography color="text.secondary">
+                  {tip.description}
+                </Typography>
+              </Paper>
+            </Grid>
+          ))}
+        </Grid>
+
+        <Paper
+          elevation={8}
+          sx={{
+            p: 4,
+            borderRadius: 5,
+            background: 'linear-gradient(135deg, #1976d2 0%, #64b5f6 100%)',
+            color: '#fff',
+            mb: 8,
+          }}
+        >
+          <Stack spacing={3} alignItems="center" textAlign="center">
+            <Typography variant="h4" sx={{ fontWeight: 700 }}>
+              Stay Updated with Health Tips
+            </Typography>
+            <Typography variant="body1" sx={{ maxWidth: 600 }}>
+              Subscribe to our newsletter for the latest health tips, product updates, and exclusive offers.
+            </Typography>
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={2}
+              sx={{ width: '100%', maxWidth: 500 }}
+            >
+              <TextField
+                fullWidth
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                sx={{
+                  bgcolor: alpha('#fff', 0.1),
+                  borderRadius: 2,
+                  '& .MuiOutlinedInput-root': {
+                    color: '#fff',
+                    '& fieldset': {
+                      borderColor: alpha('#fff', 0.3),
+                    },
+                    '&:hover fieldset': {
+                      borderColor: alpha('#fff', 0.5),
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#fff',
+                    },
+                  },
+                }}
+              />
+              <Button
+                variant="contained"
+                endIcon={<SendIcon />}
+                sx={{
+                  bgcolor: '#fff',
+                  color: 'primary.main',
+                  px: 4,
+                  '&:hover': {
+                    bgcolor: alpha('#fff', 0.9),
+                  },
+                }}
+              >
+                Subscribe
+              </Button>
+            </Stack>
+          </Stack>
+        </Paper>
+      </Container>
+
+      <Box 
+        component="footer" 
+        sx={{ 
+          bgcolor: alpha('#fff', 0.8),
+          borderTop: '1px solid',
+          borderColor: 'divider',
+          py: 6,
+          mt: 'auto',
+          backdropFilter: 'blur(8px)',
+        }}
+      >
+        <Container maxWidth="lg">
+          <Stack 
+            direction={{ xs: 'column', sm: 'row' }} 
+            spacing={6} 
+            justifyContent="center" 
+            alignItems="center"
+            sx={{ mb: 3 }}
+          >
+            <Link 
+              href="#" 
+              color="text.secondary" 
+              underline="hover"
+              sx={{ 
+                fontWeight: 600,
+                transition: 'color 0.2s',
+                '&:hover': {
+                  color: 'primary.main',
+                },
+              }}
+            >
+              About
+            </Link>
+            <Link 
+              href="#" 
+              color="text.secondary" 
+              underline="hover"
+              sx={{ 
+                fontWeight: 600,
+                transition: 'color 0.2s',
+                '&:hover': {
+                  color: 'primary.main',
+                },
+              }}
+            >
+              Help
+            </Link>
+            <Link 
+              href="#" 
+              color="text.secondary" 
+              underline="hover"
+              sx={{ 
+                fontWeight: 600,
+                transition: 'color 0.2s',
+                '&:hover': {
+                  color: 'primary.main',
+                },
+              }}
+            >
+              Terms
+            </Link>
+          </Stack>
+          <Typography 
+            variant="body2" 
+            color="text.secondary" 
+            align="center"
+            sx={{ fontWeight: 600 }}
+          >
+            © 2024 HealthHub Pharmacy
+          </Typography>
+        </Container>
+      </Box>
+    </Box>
   );
 };
 
