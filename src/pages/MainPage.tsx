@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
   AppBar,
   Toolbar,
@@ -12,7 +14,7 @@ import {
   CardContent,
   Container,
   IconButton,
-  Link,
+  Link as MuiLink,
   Box,
   useTheme,
   useMediaQuery,
@@ -43,6 +45,11 @@ const HealthHubPharmacy = () => {
   const [email, setEmail] = useState('');
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const navigate = useNavigate();
+
+  const handleLoginClick = () => {
+    navigate('/login');
+  };
 
   const categories = [
     { name: 'Pain Relief', image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300&h=300&fit=crop' },
@@ -151,7 +158,8 @@ const HealthHubPharmacy = () => {
           <Button
             variant="contained"
             startIcon={<AccountCircle />}
-            sx={{ 
+            onClick={handleLoginClick}
+            sx={{
               ml: 2,
               borderRadius: 2,
               textTransform: 'none',
@@ -522,7 +530,7 @@ const HealthHubPharmacy = () => {
             sx={{ mb: 3 }}
           >
             <Link 
-              href="#" 
+              to="#" 
               color="text.secondary" 
               underline="hover"
               sx={{ 
@@ -536,7 +544,7 @@ const HealthHubPharmacy = () => {
               About
             </Link>
             <Link 
-              href="#" 
+              to="#" 
               color="text.secondary" 
               underline="hover"
               sx={{ 
@@ -550,7 +558,7 @@ const HealthHubPharmacy = () => {
               Help
             </Link>
             <Link 
-              href="#" 
+              to="#" 
               color="text.secondary" 
               underline="hover"
               sx={{ 

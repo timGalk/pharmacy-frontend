@@ -8,18 +8,22 @@ import {
   Stack,
   Avatar,
   InputAdornment,
+  Alert,
 } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import EmailIcon from "@mui/icons-material/Email";
 import LockIcon from "@mui/icons-material/Lock";
 import { useState } from "react";
-import { Link as RouterLink } from "react-router-dom";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
 import Link from "@mui/material/Link";
+import { authService } from "../services/authService";
 
 export default function LoginPage() {
+  const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [submitting, setSubmitting] = useState(false);
+  const [apiError, setApiError] = useState<string>("");
 
   const validateField = (name: string, value: string) => {
     let error = "";
@@ -55,15 +59,21 @@ export default function LoginPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
+    
     setSubmitting(true);
-    // Simulate login
-    setTimeout(() => {
+    setApiError("");
+    
+    try {
+      await authService.login(form);
+      navigate("/dashboard"); // Redirect to dashboard after successful login
+    } catch (error) {
+      setApiError(error instanceof Error ? error.message : "Login failed");
+    } finally {
       setSubmitting(false);
-      alert("Login successful!");
-    }, 1000);
+    }
   };
 
   return (
@@ -98,6 +108,11 @@ export default function LoginPage() {
               Sign in to your pharmacy account
             </Typography>
           </Stack>
+          {apiError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {apiError}
+            </Alert>
+          )}
           <Box component="form" onSubmit={handleSubmit} noValidate>
             <Stack spacing={3}>
               <TextField
