@@ -13,6 +13,7 @@ import {
   ShoppingCart as ShoppingCartIcon,
   Article as ArticleIcon
 } from '@mui/icons-material';
+import { authService } from '../services/authService';
 
 const HealthHubPharmacy = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -20,6 +21,8 @@ const HealthHubPharmacy = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const user = authService.getUser();
+  const isAuthenticated = authService.isAuthenticated();
 
   const categories = [
     { name: 'Pain Relief', img: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=300' },
@@ -36,6 +39,26 @@ const HealthHubPharmacy = () => {
     { title: '5 Tips for Cold Season', snippet: 'Stay safe and healthy during flu season with these simple tips.', img: 'https://images.unsplash.com/photo-1588776814546-44d2bb6e95de?w=300' },
     { title: 'Daily Vitamins Guide', snippet: 'Learn which vitamins you really need each day.', img: 'https://images.unsplash.com/photo-1578496481135-adaaa4c7c1b0?w=300' },
   ];
+
+  const handleLoginClick = () => {
+    if (isAuthenticated) {
+      // Redirect to appropriate dashboard based on primary role
+      const primaryRole = authService.getPrimaryRole();
+      const roleRedirects: { [key: string]: string } = {
+        admin: '/admin/dashboard',
+        pharmacist: '/pharmacist/dashboard',
+        customer: '/customer/dashboard'
+      };
+      navigate(roleRedirects[primaryRole || 'customer'] || '/home');
+    } else {
+      navigate('/login');
+    }
+  };
+
+  const handleLogout = () => {
+    authService.logout();
+    navigate('/home');
+  };
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: '#f9f9f9' }}>
@@ -65,11 +88,23 @@ const HealthHubPharmacy = () => {
             </IconButton>
             <Button
               variant="contained"
-              startIcon={<AccountCircle />}
-              onClick={() => navigate('/login')}
-              sx={{ ml: 2, borderRadius: 3, textTransform: 'none' }}
+              onClick={isAuthenticated ? handleLogout : handleLoginClick}
+              sx={{
+                borderRadius: '12px',
+                textTransform: 'none',
+                px: 3,
+                py: 1,
+                fontWeight: 600,
+                bgcolor: '#4F46E5',
+                fontSize: '14px',
+                boxShadow: 'none',
+                '&:hover': {
+                  bgcolor: '#4338CA',
+                  boxShadow: '0 4px 12px rgba(79, 70, 229, 0.3)',
+                },
+              }}
             >
-              Login
+              {isAuthenticated ? `Sign Out (${authService.getFullName()})` : 'Sign In'}
             </Button>
           </Box>
         </Toolbar>

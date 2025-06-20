@@ -67,9 +67,28 @@ export default function LoginPage() {
     setApiError("");
     
     try {
-      await authService.login(form);
-      navigate("/dashboard"); // Redirect to dashboard after successful login
+      console.log('Attempting login with:', form);
+      const response = await authService.login(form);
+      console.log('Login response:', response);
+      
+      // Debug the storage
+      authService.debugStorage();
+      
+      // Redirect based on user's primary role
+      const primaryRole = authService.getPrimaryRole();
+      console.log('Primary role:', primaryRole);
+      
+      const roleRedirects: { [key: string]: string } = {
+        admin: '/admin/dashboard',
+        pharmacist: '/pharmacist/dashboard',
+        customer: '/customer/dashboard'
+      };
+      
+      const redirectPath = roleRedirects[primaryRole || 'customer'] || '/home';
+      console.log('Redirecting to:', redirectPath);
+      navigate(redirectPath);
     } catch (error) {
+      console.error('Login error:', error);
       setApiError(error instanceof Error ? error.message : "Login failed");
     } finally {
       setSubmitting(false);
