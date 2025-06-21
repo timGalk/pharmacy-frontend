@@ -9,6 +9,7 @@ import {
   Stack,
   Avatar,
   InputAdornment,
+  Alert,
 } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
 import HomeIcon from "@mui/icons-material/Home";
@@ -17,8 +18,12 @@ import LockIcon from "@mui/icons-material/Lock";
 import PhoneIcon from "@mui/icons-material/Phone";
 import CakeIcon from "@mui/icons-material/Cake";
 import { useState } from "react";
-import { Link as RouterLink } from "react-router-dom";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
 import Link from "@mui/material/Link";
+import axios from 'axios';
+import { authService } from '../services/authService';
+
+const API_URL = 'http://localhost:8080/api';
 
 const rolesList = ["USER", "ADMIN", "PHARMACIST"];
 
@@ -39,8 +44,11 @@ const passwordRegex =
 const phoneRegex = /^\+?[0-9]{7,15}$/;
 
 export default function RegisterPage() {
+  const navigate = useNavigate();
   const [form, setForm] = useState(initialForm);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [submitting, setSubmitting] = useState(false);
+  const [apiError, setApiError] = useState<string>("");
 
   const validateField = (name: string, value: string) => {
     let error = "";
@@ -153,11 +161,118 @@ export default function RegisterPage() {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validate()) {
-      // Submit logic here
-      alert("Registration successful!");
+    if (!validate()) return;
+
+    setSubmitting(true);
+    setApiError("");
+
+    try {
+      // Prepare the registration data to match UserCreateDTO
+      const registrationData = {
+        firstName: form.firstName,
+        lastName: form.lastName,
+        address: form.address,
+        age: parseInt(form.age),
+        email: form.email,
+        password: form.password,
+        phoneNumber: form.phoneNumber,
+        roles: form.roles, // Send as array, backend will convert to Set
+        active: true, // Add the missing active field
+      };
+
+      console.log('Sending registration data:', registrationData);
+
+      // Make the registration request
+      const response = await axios.post(`${API_URL}/register`, registrationData);
+      
+      console.log('Registration response:', response.data);
+
+      // If registration is successful and returns a token, handle it like login
+      if (response.data.token) {
+        // Store the token and user data
+        localStorage.setItem('token', response.data.token);
+        
+        // If the response includes user data, store it
+        if (response.data.user) {
+          localStorage.setItem('user', JSON.stringify(response.data.user));
+        } else {
+          // Decode JWT to get user info if not provided
+          const decodedToken = decodeJWT(response.data.token);
+          if (decodedToken) {
+            const user = {
+              id: parseInt(decodedToken.sub),
+              firstName: decodedToken.firstName || form.firstName,
+              lastName: decodedToken.lastName || form.lastName,
+              address: decodedToken.address || form.address,
+              age: decodedToken.age || parseInt(form.age),
+              email: decodedToken.email || form.email,
+              phoneNumber: decodedToken.phoneNumber || form.phoneNumber,
+              roles: decodedToken.roles || form.roles,
+              active: true,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            };
+            localStorage.setItem('user', JSON.stringify(user));
+          }
+        }
+
+        // Navigate to appropriate dashboard based on role
+        const primaryRole = form.roles[0]?.toLowerCase();
+        const roleRedirects: { [key: string]: string } = {
+          admin: '/admin/dashboard',
+          pharmacist: '/pharmacist/dashboard',
+          user: '/customer/dashboard'
+        };
+        
+        const redirectPath = roleRedirects[primaryRole || 'user'] || '/customer/dashboard';
+        console.log('Redirecting to:', redirectPath);
+        navigate(redirectPath);
+      } else {
+        // If no token returned, just show success and redirect to login
+        alert("Registration successful! Please login with your new account.");
+        navigate('/login');
+      }
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      
+      // Handle validation errors from backend
+      if (error?.response?.status === 400) {
+        if (error?.response?.data?.errors) {
+          // Handle multiple validation errors
+          const validationErrors = error.response.data.errors;
+          const errorMessages = validationErrors.map((err: any) => err.defaultMessage).join(', ');
+          setApiError(errorMessages);
+        } else if (error?.response?.data?.message) {
+          setApiError(error.response.data.message);
+        } else {
+          setApiError('Validation failed. Please check your input.');
+        }
+      } else if (error?.response?.data?.message) {
+        setApiError(error.response.data.message);
+      } else if (error?.response?.data?.error) {
+        setApiError(error.response.data.error);
+      } else {
+        setApiError('Registration failed. Please try again.');
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // JWT decode function (same as in authService)
+  const decodeJWT = (token: string): any => {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      return JSON.parse(jsonPayload);
+    } catch (error) {
+      console.error('Error decoding JWT:', error);
+      return null;
     }
   };
 
@@ -193,6 +308,13 @@ export default function RegisterPage() {
               Create your account to access the pharmacy system
             </Typography>
           </Stack>
+
+          {apiError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {apiError}
+            </Alert>
+          )}
+
           <Box component="form" onSubmit={handleSubmit} noValidate>
             <Stack spacing={2}>
               <Box sx={{ display: "flex", gap: 2 }}>
@@ -383,6 +505,7 @@ export default function RegisterPage() {
                 type="submit"
                 variant="contained"
                 size="large"
+                disabled={submitting}
                 sx={{
                   mt: 2,
                   borderRadius: 3,
@@ -398,7 +521,7 @@ export default function RegisterPage() {
                   },
                 }}
               >
-                Register
+                {submitting ? "Creating Account..." : "Register"}
               </Button>
               <Typography align="center" sx={{ mt: 1 }}>
                 Already have an account?{" "}
