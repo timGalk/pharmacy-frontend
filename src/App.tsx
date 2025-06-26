@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/ResgisterPage';
 import MainPage from './pages/MainPage';
+import CartPage from './pages/CartPage';
 import PharmacistPage from './pages/PharmacistPage';
 import AdminDashboard from './pages/AdminDashboard';
 import CustomerDashboard from './pages/CustomerDashboard';
@@ -20,6 +21,15 @@ const App: React.FC = () => {
         <Route path="/register" element={<RegisterPage />} />
         
         {/* Protected routes with role-based access */}
+        <Route 
+          path="/cart" 
+          element={
+            <ProtectedRoute allowedRoles={['user']}>
+              <CartPage />
+            </ProtectedRoute>
+          } 
+        />
+        
         <Route 
           path="/admin/dashboard" 
           element={
@@ -41,7 +51,7 @@ const App: React.FC = () => {
         <Route 
           path="/customer/dashboard" 
           element={
-            <ProtectedRoute allowedRoles={['customer']}>
+            <ProtectedRoute allowedRoles={['user']}>
               <CustomerDashboard />
             </ProtectedRoute>
           } 
