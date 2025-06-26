@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Container,
   Typography,
   Paper,
-  Grid,
   Button,
   TextField,
   Dialog,
@@ -59,20 +58,17 @@ import {
   Schedule as ScheduleIcon,
 } from '@mui/icons-material';
 import Navigation from '../components/Navigation';
+import { addMedicine, getAllMedicines, deleteMedicine, updateMedicine } from '../services/api'; // adjust path as needed
+import Grid from '@mui/material/Grid';
 
 interface Medicine {
-  id: string;
+  id: string | number;
   name: string;
-  genericName: string;
-  category: string;
-  price: number;
-  stock: number;
-  manufacturer: string;
   description: string;
-  requiresPrescription: boolean;
+  price: number;
+  stockQuantity: number;
+  expirationDate: string;
   image: string;
-  expiryDate: string;
-  status: 'active' | 'inactive' | 'out_of_stock';
 }
 
 interface BlogArticle {
@@ -95,38 +91,32 @@ const PharmacistPage: React.FC = () => {
   const [editingMedicine, setEditingMedicine] = useState<Medicine | null>(null);
   const [editingArticle, setEditingArticle] = useState<BlogArticle | null>(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [medicineToDelete, setMedicineToDelete] = useState<Medicine | null>(null);
 
-  // Sample data
-  const [medicines, setMedicines] = useState<Medicine[]>([
-    {
-      id: '1',
-      name: 'Paracetamol 500mg',
-      genericName: 'Acetaminophen',
-      category: 'Pain Relief',
-      price: 5.99,
-      stock: 150,
-      manufacturer: 'Generic Pharma',
-      description: 'Effective pain reliever and fever reducer',
-      requiresPrescription: false,
-      image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=200&h=200&fit=crop',
-      expiryDate: '2025-12-31',
-      status: 'active',
-    },
-    {
-      id: '2',
-      name: 'Amoxicillin 250mg',
-      genericName: 'Amoxicillin',
-      category: 'Antibiotics',
-      price: 12.99,
-      stock: 45,
-      manufacturer: 'MedCorp',
-      description: 'Broad-spectrum antibiotic for bacterial infections',
-      requiresPrescription: true,
-      image: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=200&h=200&fit=crop',
-      expiryDate: '2024-06-30',
-      status: 'active',
-    },
-  ]);
+  // Load medicines from API
+  const [medicines, setMedicines] = useState<Medicine[]>([]);
+
+  // Fetch medicines from API on component mount
+  useEffect(() => {
+    const fetchMedicines = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const medicinesData = await getAllMedicines();
+        setMedicines(medicinesData);
+      } catch (err) {
+        setError('Failed to load medicines');
+        console.error('Error fetching medicines:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMedicines();
+  }, []);
 
   const [articles, setArticles] = useState<BlogArticle[]>([
     {
@@ -157,14 +147,11 @@ const PharmacistPage: React.FC = () => {
 
   const [newMedicine, setNewMedicine] = useState<Partial<Medicine>>({
     name: '',
-    genericName: '',
-    category: '',
-    price: 0,
-    stock: 0,
-    manufacturer: '',
     description: '',
-    requiresPrescription: false,
-    expiryDate: '',
+    price: 0,
+    stockQuantity: 0,
+    expirationDate: '',
+    image: '',
   });
 
   const [newArticle, setNewArticle] = useState<Partial<BlogArticle>>({
@@ -179,34 +166,62 @@ const PharmacistPage: React.FC = () => {
     setActiveTab(newValue);
   };
 
-  const handleMedicineSubmit = () => {
-    if (editingMedicine) {
-      setMedicines(medicines.map(med => 
-        med.id === editingMedicine.id ? { ...editingMedicine, ...newMedicine } as Medicine : med
-      ));
-    } else {
-      const medicine: Medicine = {
-        id: Date.now().toString(),
-        ...newMedicine,
-        image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=200&h=200&fit=crop',
-        status: 'active',
-      } as Medicine;
-      setMedicines([...medicines, medicine]);
+  const handleMedicineSubmit = async () => {
+    // Validation
+    if (!newMedicine.name || newMedicine.name.length < 3 || newMedicine.name.length > 50) {
+      setSnackbar({ open: true, message: 'Name must be between 3 and 50 characters', severity: 'error' });
+      return;
     }
-    setMedicineDialogOpen(false);
-    setEditingMedicine(null);
-    setNewMedicine({
-      name: '',
-      genericName: '',
-      category: '',
-      price: 0,
-      stock: 0,
-      manufacturer: '',
-      description: '',
-      requiresPrescription: false,
-      expiryDate: '',
-    });
-    setSnackbar({ open: true, message: 'Medicine saved successfully!', severity: 'success' });
+    if (!newMedicine.description || newMedicine.description.length < 3 || newMedicine.description.length > 200) {
+      setSnackbar({ open: true, message: 'Description must be between 3 and 200 characters', severity: 'error' });
+      return;
+    }
+    if (newMedicine.price === undefined || newMedicine.price < 0) {
+      setSnackbar({ open: true, message: 'Price must be greater than or equal to 0', severity: 'error' });
+      return;
+    }
+    if (newMedicine.stockQuantity === undefined || newMedicine.stockQuantity < 0) {
+      setSnackbar({ open: true, message: 'Stock quantity must be greater than or equal to 0', severity: 'error' });
+      return;
+    }
+    if (newMedicine.image && newMedicine.image.length > 255) {
+      setSnackbar({ open: true, message: 'Image URL must not exceed 255 characters', severity: 'error' });
+      return;
+    }
+    if (!newMedicine.expirationDate) {
+      setSnackbar({ open: true, message: 'Expiration date is required', severity: 'error' });
+      return;
+    }
+    try {
+      if (editingMedicine) {
+        await updateMedicine(editingMedicine.id.toString(), {
+          name: newMedicine.name!,
+          description: newMedicine.description!,
+          price: newMedicine.price!,
+          quantity: newMedicine.stockQuantity!,
+          expirationDate: newMedicine.expirationDate!,
+          image: newMedicine.image || '',
+        });
+      } else {
+        await addMedicine({
+          name: newMedicine.name!,
+          description: newMedicine.description!,
+          price: newMedicine.price!,
+          stockQuantity: newMedicine.stockQuantity!,
+          expirationDate: newMedicine.expirationDate!,
+          image: newMedicine.image || '',
+        });
+      }
+      // Refresh medicines from API
+      const medicinesData = await getAllMedicines();
+      setMedicines(medicinesData);
+      setMedicineDialogOpen(false);
+      setEditingMedicine(null);
+      setNewMedicine({ name: '', description: '', price: 0, stockQuantity: 0, expirationDate: '', image: '' });
+      setSnackbar({ open: true, message: 'Medicine saved successfully!', severity: 'success' });
+    } catch (error) {
+      setSnackbar({ open: true, message: 'Failed to save medicine', severity: 'error' });
+    }
   };
 
   const handleArticleSubmit = () => {
@@ -249,9 +264,16 @@ const PharmacistPage: React.FC = () => {
     setArticleDialogOpen(true);
   };
 
-  const handleDeleteMedicine = (id: string) => {
-    setMedicines(medicines.filter(med => med.id !== id));
-    setSnackbar({ open: true, message: 'Medicine deleted successfully!', severity: 'success' });
+  const handleDeleteMedicine = async (id: string | number) => {
+    try {
+      await deleteMedicine(id.toString());
+      // Refresh medicines from API
+      const medicinesData = await getAllMedicines();
+      setMedicines(medicinesData);
+      setSnackbar({ open: true, message: 'Medicine deleted successfully!', severity: 'success' });
+    } catch (error) {
+      setSnackbar({ open: true, message: 'Failed to delete medicine', severity: 'error' });
+    }
   };
 
   const handleDeleteArticle = (id: string) => {
@@ -326,7 +348,7 @@ const PharmacistPage: React.FC = () => {
             <Paper sx={{ p: 3, textAlign: 'center' }}>
               <TrendingIcon sx={{ fontSize: 40, color: 'warning.main', mb: 1 }} />
               <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
-                {medicines.filter(m => m.stock < 50).length}
+                {medicines.filter(m => m.stockQuantity < 50).length}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Low Stock Items
@@ -372,64 +394,86 @@ const PharmacistPage: React.FC = () => {
               </Button>
             </Box>
 
-            <Grid container spacing={3}>
-              {medicines.map((medicine) => (
-                <Grid item xs={12} sm={6} md={4} key={medicine.id}>
-                  <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                    <Box sx={{ position: 'relative' }}>
-                      <img
-                        src={medicine.image}
-                        alt={medicine.name}
-                        style={{ width: '100%', height: 200, objectFit: 'cover' }}
-                      />
-                      <Chip
-                        label={medicine.status.replace('_', ' ')}
-                        color={getStatusColor(medicine.status) as any}
-                        size="small"
-                        sx={{ position: 'absolute', top: 8, right: 8 }}
-                      />
+            {loading && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 4 }}>
+                <Typography variant="h6" color="text.secondary">
+                  Loading medicines...
+                </Typography>
+              </Box>
+            )}
+
+            {error && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 4 }}>
+                <Alert severity="error" sx={{ width: '100%', maxWidth: 600 }}>
+                  {error}
+                </Alert>
+              </Box>
+            )}
+
+            {!loading && !error && (
+              <Grid container spacing={3}>
+                {medicines.length === 0 ? (
+                  <Grid item xs={12}>
+                    <Box sx={{ textAlign: 'center', py: 4 }}>
+                      <Typography variant="h6" color="text.secondary">
+                        No medicines found. Add your first medicine to get started.
+                      </Typography>
                     </Box>
-                    <CardContent sx={{ flexGrow: 1 }}>
-                      <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
-                        {medicine.name}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                        {medicine.genericName}
-                      </Typography>
-                      <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
-                        <Chip label={medicine.category} size="small" variant="outlined" />
-                        {medicine.requiresPrescription && (
-                          <Chip label="Prescription Required" size="small" color="warning" />
-                        )}
-                      </Stack>
-                      <Typography variant="h6" color="primary" sx={{ fontWeight: 700 }}>
-                        ${medicine.price}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Stock: {medicine.stock} units
-                      </Typography>
-                    </CardContent>
-                    <CardActions>
-                      <Button
-                        size="small"
-                        startIcon={<EditIcon />}
-                        onClick={() => handleEditMedicine(medicine)}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        size="small"
-                        color="error"
-                        startIcon={<DeleteIcon />}
-                        onClick={() => handleDeleteMedicine(medicine.id)}
-                      >
-                        Delete
-                      </Button>
-                    </CardActions>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
+                  </Grid>
+                ) : (
+                  medicines.map((medicine) => (
+                    <Grid item xs={12} sm={6} md={4} key={medicine.id}>
+                      <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                        <Box sx={{ position: 'relative' }}>
+                          <img
+                            src={medicine.image}
+                            alt={medicine.name}
+                            style={{ width: '100%', height: 200, objectFit: 'cover' }}
+                          />
+                        </Box>
+                        <CardContent sx={{ flexGrow: 1 }}>
+                          <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                            {medicine.name}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                            {medicine.description}
+                          </Typography>
+                          <Typography variant="h6" color="primary" sx={{ fontWeight: 700 }}>
+                            ${medicine.price}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Quantity: {medicine.stockQuantity} units
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Expiry: {medicine.expirationDate}
+                          </Typography>
+                        </CardContent>
+                        <CardActions>
+                          <Button
+                            size="small"
+                            startIcon={<EditIcon />}
+                            onClick={() => handleEditMedicine(medicine)}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            size="small"
+                            color="error"
+                            startIcon={<DeleteIcon />}
+                            onClick={() => {
+                              setMedicineToDelete(medicine);
+                              setDeleteConfirmOpen(true);
+                            }}
+                          >
+                            Delete
+                          </Button>
+                        </CardActions>
+                      </Card>
+                    </Grid>
+                  ))
+                )}
+              </Grid>
+            )}
           </Box>
         )}
 
@@ -514,11 +558,11 @@ const PharmacistPage: React.FC = () => {
                     Medicine Categories
                   </Typography>
                   <List>
-                    {Array.from(new Set(medicines.map(m => m.category))).map((category) => (
-                      <ListItem key={category}>
+                    {Array.from(new Set(medicines.map(m => m.name))).map((name) => (
+                      <ListItem key={name}>
                         <ListItemText
-                          primary={category}
-                          secondary={`${medicines.filter(m => m.category === category).length} medicines`}
+                          primary={name}
+                          secondary={`${medicines.filter(m => m.name === name).length} medicines`}
                         />
                       </ListItem>
                     ))}
@@ -560,30 +604,8 @@ const PharmacistPage: React.FC = () => {
                 label="Medicine Name"
                 value={newMedicine.name}
                 onChange={(e) => setNewMedicine({ ...newMedicine, name: e.target.value })}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Generic Name"
-                value={newMedicine.genericName}
-                onChange={(e) => setNewMedicine({ ...newMedicine, genericName: e.target.value })}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Category"
-                value={newMedicine.category}
-                onChange={(e) => setNewMedicine({ ...newMedicine, category: e.target.value })}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Manufacturer"
-                value={newMedicine.manufacturer}
-                onChange={(e) => setNewMedicine({ ...newMedicine, manufacturer: e.target.value })}
+                inputProps={{ maxLength: 50 }}
+                helperText="3-50 characters"
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -596,6 +618,7 @@ const PharmacistPage: React.FC = () => {
                 InputProps={{
                   startAdornment: <InputAdornment position="start">$</InputAdornment>,
                 }}
+                inputProps={{ min: 0 }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -603,8 +626,9 @@ const PharmacistPage: React.FC = () => {
                 fullWidth
                 label="Stock Quantity"
                 type="number"
-                value={newMedicine.stock}
-                onChange={(e) => setNewMedicine({ ...newMedicine, stock: parseInt(e.target.value) || 0 })}
+                value={newMedicine.stockQuantity}
+                onChange={(e) => setNewMedicine({ ...newMedicine, stockQuantity: parseInt(e.target.value) || 0 })}
+                inputProps={{ min: 0 }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -612,20 +636,19 @@ const PharmacistPage: React.FC = () => {
                 fullWidth
                 label="Expiry Date"
                 type="date"
-                value={newMedicine.expiryDate}
-                onChange={(e) => setNewMedicine({ ...newMedicine, expiryDate: e.target.value })}
+                value={newMedicine.expirationDate}
+                onChange={(e) => setNewMedicine({ ...newMedicine, expirationDate: e.target.value })}
                 InputLabelProps={{ shrink: true }}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={newMedicine.requiresPrescription}
-                    onChange={(e) => setNewMedicine({ ...newMedicine, requiresPrescription: e.target.checked })}
-                  />
-                }
-                label="Requires Prescription"
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Image URL"
+                value={newMedicine.image}
+                onChange={(e) => setNewMedicine({ ...newMedicine, image: e.target.value })}
+                inputProps={{ maxLength: 255 }}
+                helperText="Paste a valid image URL (max 255 characters)"
               />
             </Grid>
             <Grid item xs={12}>
@@ -636,6 +659,8 @@ const PharmacistPage: React.FC = () => {
                 rows={4}
                 value={newMedicine.description}
                 onChange={(e) => setNewMedicine({ ...newMedicine, description: e.target.value })}
+                inputProps={{ maxLength: 200 }}
+                helperText="3-200 characters"
               />
             </Grid>
           </Grid>
@@ -727,6 +752,37 @@ const PharmacistPage: React.FC = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteConfirmOpen}
+        onClose={() => {
+          setDeleteConfirmOpen(false);
+          setMedicineToDelete(null);
+        }}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogContent>
+          <Typography variant="body1">
+            Are you sure you want to delete this medicine?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => {
+            setDeleteConfirmOpen(false);
+            setMedicineToDelete(null);
+          }}>Cancel</Button>
+          <Button onClick={() => {
+            if (medicineToDelete) {
+              handleDeleteMedicine(medicineToDelete.id.toString());
+            }
+            setDeleteConfirmOpen(false);
+            setMedicineToDelete(null);
+          }} color="error">Delete</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
