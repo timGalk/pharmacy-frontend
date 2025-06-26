@@ -59,6 +59,7 @@ import {
 } from '@mui/icons-material';
 import Navigation from '../components/Navigation';
 import { addMedicine, getAllMedicines, deleteMedicine, updateMedicine } from '../services/api'; // adjust path as needed
+import { authService } from '../services/authService';
 import Grid from '@mui/material/Grid';
 
 interface Medicine {
@@ -374,6 +375,7 @@ const PharmacistPage: React.FC = () => {
             <Tab label="Medicine Management" icon={<InventoryIcon />} iconPosition="start" />
             <Tab label="Blog Articles" icon={<ArticleIcon />} iconPosition="start" />
             <Tab label="Analytics" icon={<AnalyticsIcon />} iconPosition="start" />
+            <Tab label="Me" icon={<PeopleIcon />} iconPosition="start" />
           </Tabs>
         </Paper>
 
@@ -584,6 +586,201 @@ const PharmacistPage: React.FC = () => {
                       </ListItem>
                     ))}
                   </List>
+                </Paper>
+              </Grid>
+            </Grid>
+          </Box>
+        )}
+
+        {/* Me Tab */}
+        {activeTab === 3 && (
+          <Box>
+            <Typography variant="h5" sx={{ fontWeight: 600, mb: 3 }}>
+              My Profile
+            </Typography>
+            <Grid container spacing={3}>
+              {/* Profile Information */}
+              <Grid item xs={12} md={8}>
+                <Paper sx={{ p: 3 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                    <Avatar sx={{ width: 80, height: 80, mr: 3, bgcolor: 'primary.main' }}>
+                      <PeopleIcon sx={{ fontSize: 40 }} />
+                    </Avatar>
+                    <Box>
+                      <Typography variant="h4" sx={{ fontWeight: 700 }}>
+                        {authService.getFullName() || 'Pharmacist User'}
+                      </Typography>
+                      <Typography variant="body1" color="text.secondary">
+                        {authService.getUser()?.email || 'user@example.com'}
+                      </Typography>
+                      <Chip 
+                        label={authService.getPrimaryRole()?.toUpperCase() || 'PHARMACIST'} 
+                        color="primary" 
+                        size="small" 
+                        sx={{ mt: 1 }}
+                      />
+                    </Box>
+                  </Box>
+                  
+                  <Divider sx={{ my: 3 }} />
+                  
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="body2" color="text.secondary">
+                        First Name
+                      </Typography>
+                      <Typography variant="body1" sx={{ mb: 2 }}>
+                        {authService.getUser()?.firstName || 'N/A'}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="body2" color="text.secondary">
+                        Last Name
+                      </Typography>
+                      <Typography variant="body1" sx={{ mb: 2 }}>
+                        {authService.getUser()?.lastName || 'N/A'}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="body2" color="text.secondary">
+                        Age
+                      </Typography>
+                      <Typography variant="body1" sx={{ mb: 2 }}>
+                        {authService.getUser()?.age || 'N/A'} years
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="body2" color="text.secondary">
+                        Phone Number
+                      </Typography>
+                      <Typography variant="body1" sx={{ mb: 2 }}>
+                        {authService.getUser()?.phoneNumber || 'N/A'}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Typography variant="body2" color="text.secondary">
+                        Address
+                      </Typography>
+                      <Typography variant="body1" sx={{ mb: 2 }}>
+                        {authService.getUser()?.address || 'N/A'}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="body2" color="text.secondary">
+                        Account Status
+                      </Typography>
+                      <Chip 
+                        label={authService.getUser()?.active ? 'Active' : 'Inactive'} 
+                        color={authService.getUser()?.active ? 'success' : 'error'} 
+                        size="small"
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="body2" color="text.secondary">
+                        Member Since
+                      </Typography>
+                      <Typography variant="body1">
+                        {authService.getUser()?.createdAt ? 
+                          new Date(authService.getUser()!.createdAt).toLocaleDateString() : 'N/A'}
+                      </Typography>
+                    </Grid>
+                  </Grid>
+                </Paper>
+              </Grid>
+
+              {/* Quick Actions */}
+              <Grid item xs={12} md={4}>
+                <Paper sx={{ p: 3 }}>
+                  <Typography variant="h6" sx={{ mb: 2 }}>
+                    Quick Actions
+                  </Typography>
+                  <Stack spacing={2}>
+                    <Button
+                      variant="outlined"
+                      startIcon={<EditIcon />}
+                      fullWidth
+                      onClick={() => {
+                        // TODO: Implement edit profile functionality
+                        setSnackbar({ open: true, message: 'Edit profile functionality coming soon!', severity: 'info' });
+                      }}
+                    >
+                      Edit Profile
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      startIcon={<ScheduleIcon />}
+                      fullWidth
+                      onClick={() => {
+                        // TODO: Implement change password functionality
+                        setSnackbar({ open: true, message: 'Change password functionality coming soon!', severity: 'info' });
+                      }}
+                    >
+                      Change Password
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      startIcon={<AnalyticsIcon />}
+                      fullWidth
+                      onClick={() => {
+                        setActiveTab(2); // Switch to Analytics tab
+                      }}
+                    >
+                      View Analytics
+                    </Button>
+                    <Button
+                      variant="contained"
+                      color="error"
+                      startIcon={<CancelIcon />}
+                      fullWidth
+                      onClick={() => {
+                        authService.logout();
+                        window.location.href = '/login';
+                      }}
+                    >
+                      Logout
+                    </Button>
+                  </Stack>
+                </Paper>
+
+                {/* Account Statistics */}
+                <Paper sx={{ p: 3, mt: 3 }}>
+                  <Typography variant="h6" sx={{ mb: 2 }}>
+                    Account Statistics
+                  </Typography>
+                  <Stack spacing={2}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Total Medicines
+                      </Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                        {medicines.length}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Blog Articles
+                      </Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                        {articles.length}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Low Stock Items
+                      </Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 600, color: 'warning.main' }}>
+                        {medicines.filter(m => m.stockQuantity < 50).length}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Total Views
+                      </Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                        {articles.reduce((sum, art) => sum + art.views, 0)}
+                      </Typography>
+                    </Box>
+                  </Stack>
                 </Paper>
               </Grid>
             </Grid>
