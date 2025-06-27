@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Button, Box, Typography } from '@mui/material';
 import { authService } from '../services/authService';
 
@@ -83,6 +83,71 @@ const RoleBasedNavigation: React.FC = () => {
         Role: {primaryRole ? primaryRole.charAt(0).toUpperCase() + primaryRole.slice(1) : 'Unknown'}
       </Typography>
       {getRoleSpecificActions()}
+      {authService.hasRole('USER') && (
+        <Box>
+          <Typography variant="h6" gutterBottom>
+            Customer Dashboard
+          </Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            fullWidth
+            sx={{ mb: 1 }}
+            component={Link}
+            to="/cart"
+          >
+            View Cart
+          </Button>
+          <Button
+            variant="outlined"
+            color="primary"
+            fullWidth
+            sx={{ mb: 1 }}
+            component={Link}
+            to="/orders"
+          >
+            My Orders
+          </Button>
+          <Button
+            variant="outlined"
+            color="primary"
+            fullWidth
+            sx={{ mb: 1 }}
+            component={Link}
+            to="/profile"
+          >
+            My Profile
+          </Button>
+        </Box>
+      )}
+
+      {(authService.hasRole('ADMIN') || authService.hasRole('PHARMACIST')) && (
+        <Box>
+          <Typography variant="h6" gutterBottom>
+            Management Dashboard
+          </Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            fullWidth
+            sx={{ mb: 1 }}
+            component={Link}
+            to="/admin/orders"
+          >
+            Manage Orders
+          </Button>
+          <Button
+            variant="outlined"
+            color="primary"
+            fullWidth
+            sx={{ mb: 1 }}
+            component={Link}
+            to="/profile"
+          >
+            My Profile
+          </Button>
+        </Box>
+      )}
     </Box>
   );
 };

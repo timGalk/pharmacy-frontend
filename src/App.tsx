@@ -1,13 +1,20 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/ResgisterPage';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import Navigation from './components/Navigation';
 import MainPage from './pages/MainPage';
+import LoginPage from './pages/LoginPage';
+import ResgisterPage from './pages/ResgisterPage';
 import CartPage from './pages/CartPage';
+import ProfilePage from './pages/ProfilePage';
+import OrdersPage from './pages/OrdersPage';
+import AdminOrdersPage from './pages/AdminOrdersPage';
+import AdminPage from './pages/AdminPage';
 import PharmacistPage from './pages/PharmacistPage';
-import AdminDashboard from './pages/AdminDashboard';
 import CustomerDashboard from './pages/CustomerDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
+import RoleDebug from './components/RoleDebug';
 import { authService } from './services/authService';
 
 const App: React.FC = () => {
@@ -15,50 +22,77 @@ const App: React.FC = () => {
     <Router>
       <Routes>
         {/* Public routes */}
-        <Route path="/" element={<Navigate to="/home" replace />} />
-        <Route path="/home" element={<MainPage />} />
+        <Route path="/" element={<MainPage />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/register" element={<ResgisterPage />} />
+        <Route path="/debug" element={<RoleDebug />} />
         
         {/* Protected routes with role-based access */}
         <Route 
           path="/cart" 
           element={
-            <ProtectedRoute allowedRoles={['user']}>
+            <ProtectedRoute>
               <CartPage />
             </ProtectedRoute>
           } 
         />
         
         <Route 
-          path="/admin/dashboard" 
+          path="/profile" 
           element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <AdminDashboard />
+            <ProtectedRoute>
+              <ProfilePage />
             </ProtectedRoute>
           } 
         />
         
         <Route 
-          path="/pharmacist/dashboard" 
+          path="/orders" 
           element={
-            <ProtectedRoute allowedRoles={['pharmacist']}>
+            <ProtectedRoute>
+              <OrdersPage />
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/admin/orders" 
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN', 'PHARMACIST']}>
+              <AdminOrdersPage />
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/admin" 
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <AdminPage />
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/pharmacist" 
+          element={
+            <ProtectedRoute allowedRoles={['PHARMACIST']}>
               <PharmacistPage />
             </ProtectedRoute>
           } 
         />
         
         <Route 
-          path="/customer/dashboard" 
+          path="/customer" 
           element={
-            <ProtectedRoute allowedRoles={['user']}>
+            <ProtectedRoute allowedRoles={['USER']}>
               <CustomerDashboard />
             </ProtectedRoute>
           } 
         />
         
         {/* Fallback route */}
-        <Route path="*" element={<Navigate to="/home" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );

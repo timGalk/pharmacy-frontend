@@ -16,8 +16,9 @@ import {
   Dashboard as DashboardIcon,
   Logout as LogoutIcon,
   Person as PersonIcon,
+  ShoppingCart as ShoppingCartIcon,
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../services/authService';
 
 const Navigation: React.FC = () => {
@@ -94,6 +95,46 @@ const Navigation: React.FC = () => {
               Logout
             </MenuItem>
           </Menu>
+          {authService.isAuthenticated() && (
+            <>
+              {authService.hasRole('USER') && (
+                <>
+                  <Button
+                    color="inherit"
+                    component={Link}
+                    to="/cart"
+                    startIcon={<ShoppingCartIcon />}
+                  >
+                    Cart {authService.getCartCount() > 0 && `(${authService.getCartCount()})`}
+                  </Button>
+                  <Button
+                    color="inherit"
+                    component={Link}
+                    to="/orders"
+                    startIcon={<ShoppingCartIcon />}
+                  >
+                    My Orders
+                  </Button>
+                </>
+              )}
+              <Button
+                color="inherit"
+                component={Link}
+                to="/profile"
+              >
+                Profile
+              </Button>
+              {(authService.hasRole('ADMIN') || authService.hasRole('PHARMACIST')) && (
+                <Button
+                  color="inherit"
+                  component={Link}
+                  to="/admin/orders"
+                >
+                  Manage Orders
+                </Button>
+              )}
+            </>
+          )}
         </Box>
       </Toolbar>
     </AppBar>

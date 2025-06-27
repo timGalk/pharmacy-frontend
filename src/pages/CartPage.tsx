@@ -11,11 +11,14 @@ import {
   Remove as RemoveIcon,
   Delete as DeleteIcon,
   ShoppingCart as ShoppingCartIcon,
-  ArrowBack as ArrowBackIcon
+  ArrowBack as ArrowBackIcon,
+  Payment as PaymentIcon
 } from '@mui/icons-material';
 import { cartService } from '../services/cartService';
 import { authService } from '../services/authService';
 import type { Cart, CartItem } from '../types/CartDTO';
+import { orderService } from '../services/orderService';
+import type { CreateOrderRequest } from '../types/OrderDTO';
 
 const CartPage = () => {
   const [cart, setCart] = useState<Cart | null>(null);
@@ -24,6 +27,11 @@ const CartPage = () => {
   const [updatingItem, setUpdatingItem] = useState<number | null>(null);
   const [removingItem, setRemovingItem] = useState<number | null>(null);
   const [clearCartDialog, setClearCartDialog] = useState(false);
+  const [checkoutDialogOpen, setCheckoutDialogOpen] = useState(false);
+  const [checkoutForm, setCheckoutForm] = useState({
+    deliveryAddress: '',
+    phoneNumber: ''
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -93,6 +101,32 @@ const CartPage = () => {
       setClearCartDialog(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to clear cart');
+    }
+  };
+
+  const handleCheckout = async () => {
+    if (!checkoutForm.deliveryAddress.trim() || !checkoutForm.phoneNumber.trim()) {
+      setError('Please fill in all required fields');
+      return;
+    }
+
+    try {
+      setError(null);
+      const orderData: CreateOrderRequest = {
+        cartId: cart?.id || 0,
+        deliveryAddress: checkoutForm.deliveryAddress,
+        phoneNumber: checkoutForm.phoneNumber
+      };
+
+      await orderService.createOrder(orderData);
+      await cartService.clearCart(cart?.id || 0);
+      await loadCart();
+      setCheckoutDialogOpen(false);
+      setCheckoutForm({ deliveryAddress: '', phoneNumber: '' });
+      setError('Order placed successfully! You can view your orders in the Orders section.');
+      setTimeout(() => setError(null), 5000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to place order');
     }
   };
 
@@ -285,9 +319,10 @@ const CartPage = () => {
 
                 <Button
                   variant="contained"
+                  color="primary"
                   fullWidth
-                  sx={{ mb: 2, borderRadius: 2 }}
-                  onClick={() => navigate('/checkout')}
+                  startIcon={<PaymentIcon />}
+                  onClick={() => setCheckoutDialogOpen(true)}
                 >
                   Proceed to Checkout
                 </Button>
@@ -316,6 +351,67 @@ const CartPage = () => {
               <Button onClick={() => setClearCartDialog(false)}>Cancel</Button>
               <Button onClick={handleClearCart} color="error" variant="contained">
                 Clear Cart
+              </Button>
+            </DialogActions>
+          </Dialog>
+
+          {/* Checkout Dialog */}
+          <Dialog
+            open={checkoutDialogOpen}
+            onClose={() => setCheckoutDialogOpen(false)}
+            maxWidth="sm"
+            fullWidth
+          >
+            <DialogTitle>
+              Checkout Information
+            </DialogTitle>
+            <DialogContent>
+              <Typography variant="body2" color="text.secondary" mb={3}>
+                Please provide your delivery information to complete your order.
+              </Typography>
+              
+              <TextField
+                fullWidth
+                label="Delivery Address"
+                multiline
+                rows={3}
+                value={checkoutForm.deliveryAddress}
+                onChange={(e) => setCheckoutForm(prev => ({ ...prev, deliveryAddress: e.target.value }))}
+                margin="normal"
+                required
+              />
+              
+              <TextField
+                fullWidth
+                label="Phone Number"
+                value={checkoutForm.phoneNumber}
+                onChange={(e) => setCheckoutForm(prev => ({ ...prev, phoneNumber: e.target.value }))}
+                margin="normal"
+                required
+              />
+
+              <Box mt={3}>
+                <Typography variant="h6" gutterBottom>
+                  Order Summary
+                </Typography>
+                <Box display="flex" justifyContent="space-between" mb={1}>
+                  <Typography>Total Amount:</Typography>
+                  <Typography variant="h6" color="primary">
+                    ${calculateTotal().toFixed(2)}
+                  </Typography>
+                </Box>
+              </Box>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setCheckoutDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleCheckout}
+              >
+                Place Order
               </Button>
             </DialogActions>
           </Dialog>
