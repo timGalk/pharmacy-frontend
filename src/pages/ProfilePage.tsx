@@ -43,7 +43,7 @@ const ProfilePage: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const userProfile = await userService.getUserProfile();
+      const userProfile = await userService.getCurrentUserProfile();
       setProfile(userProfile);
       setEditForm({
         firstName: userProfile.firstName,
@@ -168,220 +168,201 @@ const ProfilePage: React.FC = () => {
         </Alert>
       )}
 
-      <Grid container spacing={3}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' }, gap: 3 }}>
         {/* Profile Information */}
-        <Grid item xs={12} md={8}>
-          <Card>
-            <CardContent>
-              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                <Typography variant="h6">Personal Information</Typography>
+        <Card>
+          <CardContent>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+              <Typography variant="h6">Personal Information</Typography>
+              <Button
+                variant={isEditing ? "outlined" : "contained"}
+                startIcon={isEditing ? <CancelIcon /> : <EditIcon />}
+                onClick={handleEditToggle}
+              >
+                {isEditing ? 'Cancel' : 'Edit'}
+              </Button>
+            </Box>
+
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+              <TextField
+                fullWidth
+                label="First Name"
+                value={editForm?.firstName || ''}
+                onChange={(e) => setEditForm(prev => prev ? { ...prev, firstName: e.target.value } : null)}
+                disabled={!isEditing}
+                margin="normal"
+              />
+              <TextField
+                fullWidth
+                label="Last Name"
+                value={editForm?.lastName || ''}
+                onChange={(e) => setEditForm(prev => prev ? { ...prev, lastName: e.target.value } : null)}
+                disabled={!isEditing}
+                margin="normal"
+              />
+              <TextField
+                fullWidth
+                label="Email"
+                type="email"
+                value={editForm?.email || ''}
+                onChange={(e) => setEditForm(prev => prev ? { ...prev, email: e.target.value } : null)}
+                disabled={!isEditing}
+                margin="normal"
+                sx={{ gridColumn: { xs: '1', sm: '1 / -1' } }}
+              />
+              <TextField
+                fullWidth
+                label="Phone Number"
+                value={editForm?.phoneNumber || ''}
+                onChange={(e) => setEditForm(prev => prev ? { ...prev, phoneNumber: e.target.value } : null)}
+                disabled={!isEditing}
+                margin="normal"
+              />
+              <TextField
+                fullWidth
+                label="Age"
+                type="number"
+                value={editForm?.age || ''}
+                onChange={(e) => setEditForm(prev => prev ? { ...prev, age: parseInt(e.target.value) || 0 } : null)}
+                disabled={!isEditing}
+                margin="normal"
+              />
+              <TextField
+                fullWidth
+                label="Address"
+                multiline
+                rows={3}
+                value={editForm?.address || ''}
+                onChange={(e) => setEditForm(prev => prev ? { ...prev, address: e.target.value } : null)}
+                disabled={!isEditing}
+                margin="normal"
+                sx={{ gridColumn: { xs: '1', sm: '1 / -1' } }}
+              />
+            </Box>
+
+            {isEditing && (
+              <Box mt={2}>
                 <Button
-                  variant={isEditing ? "outlined" : "contained"}
-                  startIcon={isEditing ? <CancelIcon /> : <EditIcon />}
-                  onClick={handleEditToggle}
+                  variant="contained"
+                  color="primary"
+                  startIcon={<SaveIcon />}
+                  onClick={handleProfileUpdate}
                 >
-                  {isEditing ? 'Cancel' : 'Edit'}
+                  Save Changes
                 </Button>
               </Box>
-
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="First Name"
-                    value={editForm?.firstName || ''}
-                    onChange={(e) => setEditForm(prev => prev ? { ...prev, firstName: e.target.value } : null)}
-                    disabled={!isEditing}
-                    margin="normal"
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Last Name"
-                    value={editForm?.lastName || ''}
-                    onChange={(e) => setEditForm(prev => prev ? { ...prev, lastName: e.target.value } : null)}
-                    disabled={!isEditing}
-                    margin="normal"
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Email"
-                    type="email"
-                    value={editForm?.email || ''}
-                    onChange={(e) => setEditForm(prev => prev ? { ...prev, email: e.target.value } : null)}
-                    disabled={!isEditing}
-                    margin="normal"
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Phone Number"
-                    value={editForm?.phoneNumber || ''}
-                    onChange={(e) => setEditForm(prev => prev ? { ...prev, phoneNumber: e.target.value } : null)}
-                    disabled={!isEditing}
-                    margin="normal"
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Age"
-                    type="number"
-                    value={editForm?.age || ''}
-                    onChange={(e) => setEditForm(prev => prev ? { ...prev, age: parseInt(e.target.value) || 0 } : null)}
-                    disabled={!isEditing}
-                    margin="normal"
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Address"
-                    multiline
-                    rows={3}
-                    value={editForm?.address || ''}
-                    onChange={(e) => setEditForm(prev => prev ? { ...prev, address: e.target.value } : null)}
-                    disabled={!isEditing}
-                    margin="normal"
-                  />
-                </Grid>
-              </Grid>
-
-              {isEditing && (
-                <Box mt={2}>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    startIcon={<SaveIcon />}
-                    onClick={handleProfileUpdate}
-                  >
-                    Save Changes
-                  </Button>
-                </Box>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Account Information */}
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Account Information
+        <Card>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
+              Account Information
+            </Typography>
+
+            <Box display="flex" alignItems="center" mb={2}>
+              <Avatar sx={{ mr: 2, bgcolor: 'primary.main' }}>
+                {profile.firstName.charAt(0)}{profile.lastName.charAt(0)}
+              </Avatar>
+              <Box>
+                <Typography variant="subtitle1">
+                  {profile.firstName} {profile.lastName}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {profile.email}
+                </Typography>
+              </Box>
+            </Box>
+
+            <Divider sx={{ my: 2 }} />
+
+            <Box mb={2}>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Status
               </Typography>
+              <Chip
+                label={profile.active ? 'Active' : 'Inactive'}
+                color={getStatusColor(profile.active)}
+                size="small"
+              />
+            </Box>
 
-              <Box display="flex" alignItems="center" mb={2}>
-                <Avatar sx={{ mr: 2, bgcolor: 'primary.main' }}>
-                  {profile.firstName.charAt(0)}{profile.lastName.charAt(0)}
-                </Avatar>
-                <Box>
-                  <Typography variant="subtitle1">
-                    {profile.firstName} {profile.lastName}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {profile.email}
-                  </Typography>
-                </Box>
+            <Box mb={2}>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Roles
+              </Typography>
+              <Box display="flex" flexWrap="wrap" gap={0.5}>
+                {profile.roles.map((role) => (
+                  <Chip
+                    key={role}
+                    label={role}
+                    color={getRoleColor(role)}
+                    size="small"
+                  />
+                ))}
               </Box>
+            </Box>
 
-              <Divider sx={{ my: 2 }} />
+            <Box mb={2}>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Member Since
+              </Typography>
+              <Typography variant="body2">
+                {new Date(profile.createdAt).toLocaleDateString()}
+              </Typography>
+            </Box>
 
-              <Box mb={2}>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Status
-                </Typography>
-                <Chip
-                  label={profile.active ? 'Active' : 'Inactive'}
-                  color={getStatusColor(profile.active)}
-                  size="small"
-                />
-              </Box>
+            <Divider sx={{ my: 2 }} />
 
-              <Box mb={2}>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Roles
-                </Typography>
-                <Box display="flex" flexWrap="wrap" gap={0.5}>
-                  {profile.roles.map((role) => (
-                    <Chip
-                      key={role}
-                      label={role}
-                      color={getRoleColor(role)}
-                      size="small"
-                    />
-                  ))}
-                </Box>
-              </Box>
-
-              <Box mb={2}>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Member Since
-                </Typography>
-                <Typography variant="body2">
-                  {new Date(profile.createdAt).toLocaleDateString()}
-                </Typography>
-              </Box>
-
-              <Divider sx={{ my: 2 }} />
-
-              <Button
-                fullWidth
-                variant="outlined"
-                startIcon={<LockIcon />}
-                onClick={() => setShowPasswordForm(!showPasswordForm)}
-              >
-                Change Password
-              </Button>
-            </CardContent>
-          </Card>
-        </Grid>
+            <Button
+              fullWidth
+              variant="outlined"
+              startIcon={<LockIcon />}
+              onClick={() => setShowPasswordForm(!showPasswordForm)}
+            >
+              Change Password
+            </Button>
+          </CardContent>
+        </Card>
 
         {/* Password Change Form */}
         {showPasswordForm && (
-          <Grid item xs={12}>
+          <Box sx={{ gridColumn: { xs: '1', md: '1 / -1' } }}>
             <Card>
               <CardContent>
                 <Typography variant="h6" gutterBottom>
                   Change Password
                 </Typography>
 
-                <Grid container spacing={2}>
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      label="Current Password"
-                      type="password"
-                      value={passwordForm.currentPassword}
-                      onChange={(e) => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
-                      margin="normal"
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="New Password"
-                      type="password"
-                      value={passwordForm.newPassword}
-                      onChange={(e) => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
-                      margin="normal"
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      fullWidth
-                      label="Confirm New Password"
-                      type="password"
-                      value={passwordForm.confirmPassword}
-                      onChange={(e) => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                      margin="normal"
-                    />
-                  </Grid>
-                </Grid>
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                  <TextField
+                    fullWidth
+                    label="Current Password"
+                    type="password"
+                    value={passwordForm.currentPassword}
+                    onChange={(e) => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
+                    margin="normal"
+                    sx={{ gridColumn: { xs: '1', sm: '1 / -1' } }}
+                  />
+                  <TextField
+                    fullWidth
+                    label="New Password"
+                    type="password"
+                    value={passwordForm.newPassword}
+                    onChange={(e) => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
+                    margin="normal"
+                  />
+                  <TextField
+                    fullWidth
+                    label="Confirm New Password"
+                    type="password"
+                    value={passwordForm.confirmPassword}
+                    onChange={(e) => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                    margin="normal"
+                  />
+                </Box>
 
                 <Box mt={2} display="flex" gap={1}>
                   <Button
@@ -407,9 +388,9 @@ const ProfilePage: React.FC = () => {
                 </Box>
               </CardContent>
             </Card>
-          </Grid>
+          </Box>
         )}
-      </Grid>
+      </Box>
     </Box>
   );
 };

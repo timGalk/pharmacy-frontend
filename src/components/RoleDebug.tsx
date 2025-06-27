@@ -5,9 +5,9 @@ import { authService } from '../services/authService';
 const RoleDebug: React.FC = () => {
   const user = authService.getUser();
   const isAuthenticated = authService.isAuthenticated();
-  const isUser = authService.hasRole('user');
-  const isAdmin = authService.hasRole('admin');
-  const isPharmacist = authService.hasRole('pharmacist');
+  const isUser = authService.hasRole('USER');
+  const isAdmin = authService.hasRole('ADMIN');
+  const isPharmacist = authService.hasRole('PHARMACIST');
 
   if (!isAuthenticated) {
     return null;
@@ -20,10 +20,11 @@ const RoleDebug: React.FC = () => {
         <div>User ID: {user?.id}</div>
         <div>Email: {user?.email}</div>
         <div>Roles: {JSON.stringify(user?.roles)}</div>
-        <div>Is User: {isUser.toString()}</div>
-        <div>Is Admin: {isAdmin.toString()}</div>
-        <div>Is Pharmacist: {isPharmacist.toString()}</div>
+        <div>Is USER: {isUser.toString()}</div>
+        <div>Is ADMIN: {isAdmin.toString()}</div>
+        <div>Is PHARMACIST: {isPharmacist.toString()}</div>
         <div>Primary Role: {authService.getPrimaryRole()}</div>
+        <div>Has Any Role (USER, ADMIN, PHARMACIST): {authService.hasAnyRole(['USER', 'ADMIN', 'PHARMACIST']).toString()}</div>
       </Box>
     </Paper>
   );

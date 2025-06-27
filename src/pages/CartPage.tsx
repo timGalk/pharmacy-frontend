@@ -16,14 +16,17 @@ import {
 } from '@mui/icons-material';
 import { cartService } from '../services/cartService';
 import { authService } from '../services/authService';
+import { userService } from '../services/userService';
 import type { Cart, CartItem } from '../types/CartDTO';
 import { orderService } from '../services/orderService';
 import type { CreateOrderRequest } from '../types/OrderDTO';
+import type { UserProfile } from '../types/UserProfileDTO';
 
 const CartPage = () => {
   const [cart, setCart] = useState<Cart | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [updatingItem, setUpdatingItem] = useState<number | null>(null);
   const [removingItem, setRemovingItem] = useState<number | null>(null);
   const [clearCartDialog, setClearCartDialog] = useState(false);
@@ -32,6 +35,8 @@ const CartPage = () => {
     deliveryAddress: '',
     phoneNumber: ''
   });
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -42,8 +47,8 @@ const CartPage = () => {
     try {
       setLoading(true);
       setError(null);
-      const userCart = await cartService.getOrCreateUserCart();
-      setCart(userCart);
+      const cartData = await cartService.getOrCreateUserCart();
+      setCart(cartData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load cart');
     } finally {
@@ -51,30 +56,36 @@ const CartPage = () => {
     }
   };
 
-  const handleQuantityChange = async (itemId: number, newQuantity: number) => {
+  const loadUserProfile = async () => {
+    try {
+      setLoadingProfile(true);
+      const profile = await userService.getCurrentUserProfile();
+      setUserProfile(profile);
+      // Pre-fill checkout form with user's profile data
+      setCheckoutForm({
+        deliveryAddress: profile.address || '',
+        phoneNumber: profile.phoneNumber || ''
+      });
+    } catch (err) {
+      console.error('Failed to load user profile:', err);
+      // Don't show error to user, just use empty form
+    } finally {
+      setLoadingProfile(false);
+    }
+  };
+
+  const handleUpdateQuantity = async (itemId: number, newQuantity: number) => {
     if (newQuantity < 1) return;
     
     try {
       setUpdatingItem(itemId);
-      
-      // Find the cart item to get medicine info
-      const cartItem = cart?.itemList.find(item => item.id === itemId);
-      if (!cartItem) {
-        setError('Item not found in cart');
-        return;
-      }
-      
-      // Validate against stock quantity
-      if (newQuantity > cartItem.medicine.stockQuantity) {
-        setError(`Cannot update quantity. Only ${cartItem.medicine.stockQuantity} units available in stock.`);
-        return;
-      }
-      
-      const updatedCart = await cartService.updateCartItemQuantity(itemId, { quantity: newQuantity });
-      setCart(updatedCart);
-      setError(null); // Clear any previous errors
+      setError(null);
+      await cartService.updateCartItemQuantity(itemId, { quantity: newQuantity });
+      await loadCart();
+      setSuccess('Cart updated successfully!');
+      setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update quantity');
+      setError(err instanceof Error ? err.message : 'Failed to update cart');
     } finally {
       setUpdatingItem(null);
     }
@@ -83,8 +94,11 @@ const CartPage = () => {
   const handleRemoveItem = async (itemId: number) => {
     try {
       setRemovingItem(itemId);
-      const updatedCart = await cartService.removeItemFromCart(itemId);
-      setCart(updatedCart);
+      setError(null);
+      await cartService.removeItemFromCart(itemId);
+      await loadCart();
+      setSuccess('Item removed from cart!');
+      setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to remove item');
     } finally {
@@ -96,9 +110,11 @@ const CartPage = () => {
     if (!cart) return;
     
     try {
+      setError(null);
       await cartService.clearCart(cart.id);
-      setCart({ ...cart, itemList: [] });
-      setClearCartDialog(false);
+      await loadCart();
+      setSuccess('Cart cleared successfully!');
+      setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to clear cart');
     }
@@ -123,301 +139,300 @@ const CartPage = () => {
       await loadCart();
       setCheckoutDialogOpen(false);
       setCheckoutForm({ deliveryAddress: '', phoneNumber: '' });
-      setError('Order placed successfully! You can view your orders in the Orders section.');
-      setTimeout(() => setError(null), 5000);
+      setSuccess('Order placed successfully! You can view your orders in the Orders section.');
+      setTimeout(() => setSuccess(null), 5000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to place order');
     }
   };
 
-  const calculateTotal = () => {
-    if (!cart) return 0;
-    return cart.itemList.reduce((total, item) => {
-      return total + (item.medicine.price * item.quantity);
-    }, 0);
+  const handleOpenCheckout = () => {
+    loadUserProfile(); // Load user profile when opening checkout
+    setCheckoutDialogOpen(true);
   };
 
-  const getTotalItems = () => {
-    if (!cart) return 0;
-    return cart.itemList.reduce((total, item) => total + item.quantity, 0);
+  const calculateTotal = () => {
+    if (!cart || !cart.itemList) return 0;
+    return cart.itemList.reduce((total: number, item: CartItem) => total + (item.medicine.price * item.quantity), 0);
+  };
+
+  const formatPrice = (price: number) => {
+    return `$${price.toFixed(2)}`;
   };
 
   if (loading) {
     return (
-      <Container sx={{ py: 4, textAlign: 'center' }}>
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
         <CircularProgress />
-        <Typography sx={{ mt: 2 }}>Loading your cart...</Typography>
-      </Container>
+      </Box>
     );
   }
 
-  if (!authService.isAuthenticated()) {
+  if (!cart || !cart.itemList || cart.itemList.length === 0) {
     return (
-      <Container sx={{ py: 4 }}>
-        <Alert severity="warning">
-          Please log in to view your cart.
-        </Alert>
-      </Container>
-    );
-  }
-
-  if (authService.hasRole('pharmacist') || authService.hasRole('admin')) {
-    return (
-      <Container sx={{ py: 4 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-          <IconButton onClick={() => navigate('/')} sx={{ mr: 2 }}>
-            <ArrowBackIcon />
-          </IconButton>
-          <ShoppingCartIcon sx={{ mr: 1 }} />
-          <Typography variant="h4" component="h1">
-            Shopping Cart
-          </Typography>
+      <Box p={3}>
+        <Box display="flex" alignItems="center" mb={3}>
+          <ArrowBackIcon sx={{ mr: 1, cursor: 'pointer' }} onClick={() => navigate('/')} />
+          <Typography variant="h4">Shopping Cart</Typography>
         </Box>
-        <Alert severity="error">
-          Only users can use cart functionality. {authService.hasRole('pharmacist') 
-            ? 'Please use your pharmacist dashboard to manage inventory.' 
-            : 'Please use your admin dashboard to manage the system.'
-          }
-        </Alert>
-      </Container>
+        
+        <Card>
+          <CardContent>
+            <Box textAlign="center" py={4}>
+              <ShoppingCartIcon sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                Your Cart is Empty
+              </Typography>
+              <Typography variant="body2" color="text.secondary" mb={2}>
+                Add some medicines to your cart to get started.
+              </Typography>
+              <Button variant="contained" color="primary" onClick={() => navigate('/')}>
+                Continue Shopping
+              </Button>
+            </Box>
+          </CardContent>
+        </Card>
+      </Box>
     );
   }
 
   return (
-    <Container sx={{ py: 4 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-        <IconButton onClick={() => navigate('/')} sx={{ mr: 2 }}>
-          <ArrowBackIcon />
-        </IconButton>
-        <ShoppingCartIcon sx={{ mr: 1 }} />
-        <Typography variant="h4" component="h1">
-          Shopping Cart
-        </Typography>
+    <Box p={3}>
+      <Box display="flex" alignItems="center" mb={3}>
+        <ArrowBackIcon sx={{ mr: 1, cursor: 'pointer' }} onClick={() => navigate('/')} />
+        <Typography variant="h4">Shopping Cart</Typography>
       </Box>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+        <Alert severity="error" sx={{ mb: 2 }}>
           {error}
         </Alert>
       )}
 
-      {!cart || cart.itemList.length === 0 ? (
-        <Card sx={{ p: 4, textAlign: 'center' }}>
-          <ShoppingCartIcon sx={{ fontSize: 64, color: 'grey.400', mb: 2 }} />
-          <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
-            Your cart is empty
-          </Typography>
-          <Button
-            variant="contained"
-            onClick={() => navigate('/')}
-            sx={{ borderRadius: 2 }}
-          >
-            Continue Shopping
-          </Button>
-        </Card>
-      ) : (
-        <>
-          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
-            <Box sx={{ flex: { md: 2 } }}>
-              {cart.itemList.map((item) => (
-                <Card key={item.id} sx={{ mb: 2 }}>
-                  <CardContent>
-                    <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, alignItems: 'center' }}>
-                      <Box sx={{ width: { xs: '100%', sm: '25%' } }}>
-                        <img
-                          src={item.medicine.image}
-                          alt={item.medicine.name}
-                          style={{
-                            width: '100%',
-                            height: 100,
-                            objectFit: 'cover',
-                            borderRadius: 8
-                          }}
-                        />
-                      </Box>
-                      <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography variant="h6" component="h3">
-                          {item.medicine.name}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {item.medicine.description}
-                        </Typography>
-                        <Typography variant="h6" color="primary" sx={{ mt: 1 }}>
-                          ${item.medicine.price.toFixed(2)}
-                        </Typography>
-                      </Box>
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <IconButton
-                          onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
-                          disabled={updatingItem === item.id || item.quantity <= 1}
-                          size="small"
-                        >
-                          <RemoveIcon />
-                        </IconButton>
-                        <TextField
-                          value={item.quantity}
-                          onChange={(e) => {
-                            const value = parseInt(e.target.value);
-                            if (!isNaN(value) && value > 0) {
-                              handleQuantityChange(item.id, value);
-                            }
-                          }}
-                          size="small"
-                          sx={{ width: 60, mx: 1 }}
-                          inputProps={{ min: 1, style: { textAlign: 'center' } }}
-                        />
-                        <IconButton
-                          onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
-                          disabled={updatingItem === item.id || item.quantity >= item.medicine.stockQuantity}
-                          size="small"
-                        >
-                          <AddIcon />
-                        </IconButton>
-                      </Box>
-                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                        Max: {item.medicine.stockQuantity} units
+      {success && (
+        <Alert severity="success" sx={{ mb: 2 }}>
+          {success}
+        </Alert>
+      )}
+
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' }, gap: 3 }}>
+        <Box>
+          {cart.itemList.map((item) => (
+            <Card key={item.id} sx={{ mb: 2 }}>
+              <CardContent>
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'auto 1fr auto' }, gap: 2, alignItems: 'center' }}>
+                  <Box>
+                    <img
+                      src={item.medicine.image}
+                      alt={item.medicine.name}
+                      style={{
+                        width: '100%',
+                        height: 120,
+                        objectFit: 'cover',
+                        borderRadius: 8
+                      }}
+                    />
+                  </Box>
+                  <Box>
+                    <Typography variant="h6" gutterBottom>
+                      {item.medicine.name}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      {item.medicine.description}
+                    </Typography>
+                    <Typography variant="h6" color="primary">
+                      {formatPrice(item.medicine.price)}
+                    </Typography>
+                  </Box>
+                  <Box display="flex" flexDirection="column" alignItems="center" gap={1}>
+                    <Box display="flex" alignItems="center" gap={1}>
+                      <IconButton
+                        size="small"
+                        onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                        disabled={item.quantity <= 1 || updatingItem === item.id}
+                      >
+                        <RemoveIcon />
+                      </IconButton>
+                      <Typography variant="body1" sx={{ minWidth: 30, textAlign: 'center' }}>
+                        {updatingItem === item.id ? <CircularProgress size={20} /> : item.quantity}
                       </Typography>
-                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        <Typography variant="h6" color="primary">
-                          ${(item.medicine.price * item.quantity).toFixed(2)}
-                        </Typography>
-                        <IconButton
-                          onClick={() => handleRemoveItem(item.id)}
-                          disabled={removingItem === item.id}
-                          color="error"
-                          size="small"
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </Box>
+                      <IconButton
+                        size="small"
+                        onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                        disabled={item.quantity >= item.medicine.stockQuantity || updatingItem === item.id}
+                      >
+                        <AddIcon />
+                      </IconButton>
                     </Box>
-                  </CardContent>
-                </Card>
-              ))}
-            </Box>
+                    <Typography variant="body2" color="text.secondary">
+                      Stock: {item.medicine.stockQuantity}
+                    </Typography>
+                    <IconButton
+                      color="error"
+                      onClick={() => handleRemoveItem(item.id)}
+                      disabled={removingItem === item.id}
+                    >
+                      {removingItem === item.id ? <CircularProgress size={20} /> : <DeleteIcon />}
+                    </IconButton>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+          ))}
+        </Box>
 
-            <Box sx={{ flex: { md: 1 }, minWidth: { md: 300 } }}>
-              <Card sx={{ p: 3, position: 'sticky', top: 20 }}>
-                <Typography variant="h6" sx={{ mb: 2 }}>
-                  Order Summary
+        <Box>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Order Summary
+              </Typography>
+              <Divider sx={{ my: 2 }} />
+              
+              <Box display="flex" justifyContent="space-between" mb={1}>
+                <Typography>Subtotal ({cart.itemList.length} items):</Typography>
+                <Typography>{formatPrice(calculateTotal())}</Typography>
+              </Box>
+              
+              <Box display="flex" justifyContent="space-between" mb={2}>
+                <Typography>Shipping:</Typography>
+                <Typography>Free</Typography>
+              </Box>
+              
+              <Divider sx={{ my: 2 }} />
+              
+              <Box display="flex" justifyContent="space-between" mb={3}>
+                <Typography variant="h6">Total:</Typography>
+                <Typography variant="h6" color="primary">
+                  {formatPrice(calculateTotal())}
                 </Typography>
-                <Divider sx={{ mb: 2 }} />
-                
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography>Items ({getTotalItems()}):</Typography>
-                  <Typography>${calculateTotal().toFixed(2)}</Typography>
-                </Box>
-                
-                <Divider sx={{ my: 2 }} />
-                
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-                  <Typography variant="h6">Total:</Typography>
-                  <Typography variant="h6" color="primary">
-                    ${calculateTotal().toFixed(2)}
-                  </Typography>
-                </Box>
+              </Box>
 
+              <Box display="flex" flexDirection="column" gap={1}>
                 <Button
                   variant="contained"
                   color="primary"
                   fullWidth
                   startIcon={<PaymentIcon />}
-                  onClick={() => setCheckoutDialogOpen(true)}
+                  onClick={handleOpenCheckout}
                 >
                   Proceed to Checkout
                 </Button>
-
                 <Button
                   variant="outlined"
-                  fullWidth
                   color="error"
-                  sx={{ borderRadius: 2 }}
+                  fullWidth
                   onClick={() => setClearCartDialog(true)}
                 >
                   Clear Cart
                 </Button>
-              </Card>
+              </Box>
+            </CardContent>
+          </Card>
+        </Box>
+      </Box>
+
+      {/* Clear Cart Dialog */}
+      <Dialog
+        open={clearCartDialog}
+        onClose={() => setClearCartDialog(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          Clear Cart
+        </DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to clear your cart? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setClearCartDialog(false)}>
+            Cancel
+          </Button>
+          <Button
+            color="error"
+            onClick={() => {
+              setClearCartDialog(false);
+              handleClearCart();
+            }}
+          >
+            Clear Cart
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Checkout Dialog */}
+      <Dialog
+        open={checkoutDialogOpen}
+        onClose={() => setCheckoutDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          Checkout Information
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" mb={3}>
+            Please provide your delivery information to complete your order.
+          </Typography>
+          
+          {loadingProfile && (
+            <Box display="flex" justifyContent="center" py={2}>
+              <CircularProgress />
+            </Box>
+          )}
+          
+          <TextField
+            fullWidth
+            label="Delivery Address"
+            multiline
+            rows={3}
+            value={checkoutForm.deliveryAddress}
+            onChange={(e) => setCheckoutForm(prev => ({ ...prev, deliveryAddress: e.target.value }))}
+            margin="normal"
+            required
+            disabled={loadingProfile}
+          />
+          
+          <TextField
+            fullWidth
+            label="Phone Number"
+            value={checkoutForm.phoneNumber}
+            onChange={(e) => setCheckoutForm(prev => ({ ...prev, phoneNumber: e.target.value }))}
+            margin="normal"
+            required
+            disabled={loadingProfile}
+          />
+
+          <Box mt={3}>
+            <Typography variant="h6" gutterBottom>
+              Order Summary
+            </Typography>
+            <Box display="flex" justifyContent="space-between" mb={1}>
+              <Typography>Total Amount:</Typography>
+              <Typography variant="h6" color="primary">
+                {formatPrice(calculateTotal())}
+              </Typography>
             </Box>
           </Box>
-
-          <Dialog open={clearCartDialog} onClose={() => setClearCartDialog(false)}>
-            <DialogTitle>Clear Cart</DialogTitle>
-            <DialogContent>
-              <Typography>
-                Are you sure you want to remove all items from your cart?
-              </Typography>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={() => setClearCartDialog(false)}>Cancel</Button>
-              <Button onClick={handleClearCart} color="error" variant="contained">
-                Clear Cart
-              </Button>
-            </DialogActions>
-          </Dialog>
-
-          {/* Checkout Dialog */}
-          <Dialog
-            open={checkoutDialogOpen}
-            onClose={() => setCheckoutDialogOpen(false)}
-            maxWidth="sm"
-            fullWidth
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCheckoutDialogOpen(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleCheckout}
+            disabled={loadingProfile}
           >
-            <DialogTitle>
-              Checkout Information
-            </DialogTitle>
-            <DialogContent>
-              <Typography variant="body2" color="text.secondary" mb={3}>
-                Please provide your delivery information to complete your order.
-              </Typography>
-              
-              <TextField
-                fullWidth
-                label="Delivery Address"
-                multiline
-                rows={3}
-                value={checkoutForm.deliveryAddress}
-                onChange={(e) => setCheckoutForm(prev => ({ ...prev, deliveryAddress: e.target.value }))}
-                margin="normal"
-                required
-              />
-              
-              <TextField
-                fullWidth
-                label="Phone Number"
-                value={checkoutForm.phoneNumber}
-                onChange={(e) => setCheckoutForm(prev => ({ ...prev, phoneNumber: e.target.value }))}
-                margin="normal"
-                required
-              />
-
-              <Box mt={3}>
-                <Typography variant="h6" gutterBottom>
-                  Order Summary
-                </Typography>
-                <Box display="flex" justifyContent="space-between" mb={1}>
-                  <Typography>Total Amount:</Typography>
-                  <Typography variant="h6" color="primary">
-                    ${calculateTotal().toFixed(2)}
-                  </Typography>
-                </Box>
-              </Box>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={() => setCheckoutDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleCheckout}
-              >
-                Place Order
-              </Button>
-            </DialogActions>
-          </Dialog>
-        </>
-      )}
-    </Container>
+            Place Order
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 };
 

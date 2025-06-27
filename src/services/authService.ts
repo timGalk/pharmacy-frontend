@@ -128,13 +128,14 @@ export const authService = {
   // Get the primary role (first role in the array)
   getPrimaryRole(): string | null {
     const user = this.getUser();
-    return user?.roles?.[0]?.toLowerCase() || null;
+    return user?.roles?.[0] || null;
   },
 
   // Check if user has a specific role
   hasRole(role: string): boolean {
     const user = this.getUser();
-    return user?.roles?.some(r => r.toLowerCase() === role.toLowerCase()) || false;
+    if (!user?.roles) return false;
+    return user.roles.some(r => r.toLowerCase() === role.toLowerCase());
   },
 
   // Check if user has any of the specified roles

@@ -39,9 +39,9 @@ const HealthHubPharmacy = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const user = authService.getUser();
   const isAuthenticated = authService.isAuthenticated();
-  const isPharmacist = authService.hasRole('pharmacist');
-  const isAdmin = authService.hasRole('admin');
-  const isUser = authService.hasRole('user');
+  const isPharmacist = authService.hasRole('PHARMACIST');
+  const isAdmin = authService.hasRole('ADMIN');
+  const isUser = authService.hasRole('USER');
   const canUseCart = cartService.canUseCart();
 
   // Debug logging

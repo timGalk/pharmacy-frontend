@@ -19,7 +19,7 @@ class CartService {
     }
     
     // Check if user is a pharmacist or admin (only USER role can use carts)
-    if (authService.hasRole('pharmacist') || authService.hasRole('admin')) {
+    if (authService.hasRole('PHARMACIST') || authService.hasRole('ADMIN')) {
       throw new Error('Only users can use cart functionality');
     }
   }
@@ -164,9 +164,9 @@ class CartService {
         return false;
       }
       
-      const isPharmacist = authService.hasRole('pharmacist');
-      const isAdmin = authService.hasRole('admin');
-      const isUser = authService.hasRole('user');
+      const isPharmacist = authService.hasRole('PHARMACIST');
+      const isAdmin = authService.hasRole('ADMIN');
+      const isUser = authService.hasRole('USER');
       
       console.log('CartService.canUseCart() - Is User:', isUser);
       console.log('CartService.canUseCart() - Is Pharmacist:', isPharmacist);

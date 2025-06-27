@@ -14,12 +14,12 @@ const RoleBasedNavigation: React.FC = () => {
 
   const getRoleSpecificActions = () => {
     switch (primaryRole) {
-      case 'admin':
+      case 'ADMIN':
         return (
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
             <Button
               variant="outlined"
-              onClick={() => navigate('/admin/dashboard')}
+              onClick={() => navigate('/admin')}
               sx={{ borderRadius: 2 }}
             >
               Admin Dashboard
@@ -30,12 +30,12 @@ const RoleBasedNavigation: React.FC = () => {
           </Box>
         );
       
-      case 'pharmacist':
+      case 'PHARMACIST':
         return (
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
             <Button
               variant="outlined"
-              onClick={() => navigate('/pharmacist/dashboard')}
+              onClick={() => navigate('/pharmacist')}
               sx={{ borderRadius: 2 }}
             >
               Pharmacist Dashboard
@@ -46,12 +46,12 @@ const RoleBasedNavigation: React.FC = () => {
           </Box>
         );
       
-      case 'user':
+      case 'USER':
         return (
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
             <Button
               variant="outlined"
-              onClick={() => navigate('/customer/dashboard')}
+              onClick={() => navigate('/customer')}
               sx={{ borderRadius: 2 }}
             >
               User Dashboard

@@ -25,11 +25,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     // Redirect to appropriate dashboard based on user's primary role
     const primaryRole = authService.getPrimaryRole();
     const roleRedirects: { [key: string]: string } = {
-      admin: '/admin/dashboard',
-      pharmacist: '/pharmacist/dashboard',
-      customer: '/customer/dashboard'
+      ADMIN: '/admin',
+      PHARMACIST: '/pharmacist',
+      USER: '/customer'
     };
-    return <Navigate to={roleRedirects[primaryRole || 'customer'] || '/home'} replace />;
+    return <Navigate to={roleRedirects[primaryRole || 'USER'] || '/'} replace />;
   }
 
   return <>{children}</>;
